@@ -622,95 +622,99 @@ export const BandControls = memo(function BandControls() {
   const all = [...data.preset.bandPresets];
   for (const e of extra) if (!all.some((p) => p.low === e.low && p.high === e.high)) all.push(e);
   return (
-    <aside className="workspace-tools band-tools" aria-label="Frequency band controls">
-      <Section title="Band-pass">
-        <div className="row">
-          <Field label="low (Hz)">
-            <NumberInput label="Band low" value={band.low} step={0.5} onCommit={(v) => setB({ low: v })} />
-          </Field>
-          <Field label="high (Hz)">
-            <NumberInput label="Band high" value={band.high} step={0.5} onCommit={(v) => setB({ high: v })} />
-          </Field>
-          <Field label="order">
-            <Select
-              label="Filter order"
-              value={String(band.order)}
-              options={[2, 3, 4, 5, 6, 7, 8].map((o) => ({ value: String(o), label: String(o) }))}
-              onChange={(v) => setB({ order: +v })}
-            />
-          </Field>
-        </div>
-        <p className="small">
-          zero-phase Butterworth{data.upstream ? ' - feature-specific filter (additional to upstream)' : ''}
-        </p>
-        <div className="presets">
-          {all.map((p) => (
-            <button
-              key={p.label}
-              className="chipbtn"
-              onClick={() => setB({ low: p.low, high: Math.min(fm, p.high) })}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-        {res?.warnings.map((w) => (
-          <Msg key={w} kind="warn">
-            {w}
-          </Msg>
-        ))}
-        {res ? (
+    <div className="band-control-deck">
+      <aside className="workspace-tools band-tools-upper" aria-label="Spectrum controls">
+        <Section title="Band-pass">
+          <div className="row">
+            <Field label="low (Hz)">
+              <NumberInput label="Band low" value={band.low} step={0.5} onCommit={(v) => setB({ low: v })} />
+            </Field>
+            <Field label="high (Hz)">
+              <NumberInput label="Band high" value={band.high} step={0.5} onCommit={(v) => setB({ high: v })} />
+            </Field>
+            <Field label="order">
+              <Select
+                label="Filter order"
+                value={String(band.order)}
+                options={[2, 3, 4, 5, 6, 7, 8].map((o) => ({ value: String(o), label: String(o) }))}
+                onChange={(v) => setB({ order: +v })}
+              />
+            </Field>
+          </div>
           <p className="small">
-            Welch nperseg {res.welch.nperseg}, 50% overlap, nfft {res.welch.nfft}; resolution limited by
-            window length ({res.resolutionHz.toFixed(2)} Hz)
+            zero-phase Butterworth{data.upstream ? ' - feature-specific filter (additional to upstream)' : ''}
           </p>
-        ) : null}
-      </Section>
-      <Section title="Display">
-        <ClassChips />
-        {data.baseline ? (
+          <div className="presets">
+            {all.map((p) => (
+              <button
+                key={p.label}
+                className="chipbtn"
+                onClick={() => setB({ low: p.low, high: Math.min(fm, p.high) })}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {res?.warnings.map((w) => (
+            <Msg key={w} kind="warn">
+              {w}
+            </Msg>
+          ))}
+          {res ? (
+            <p className="small">
+              Welch nperseg {res.welch.nperseg}, 50% overlap, nfft {res.welch.nfft}; resolution limited by
+              window length ({res.resolutionHz.toFixed(2)} Hz)
+            </p>
+          ) : null}
+        </Section>
+        <Section title="Display">
+          <ClassChips />
+          {data.baseline ? (
+            <Switch
+              checked={s.baselineVisible}
+              onChange={(v) => updateSettings({ baselineVisible: v })}
+              label="Show baseline"
+            />
+          ) : null}
           <Switch
-            checked={s.baselineVisible}
-            onChange={(v) => updateSettings({ baselineVisible: v })}
-            label="Show baseline"
+            checked={s.showAllBands}
+            onChange={(v) => updateSettings({ showAllBands: v })}
+            label="Show all named bands"
           />
-        ) : null}
-        <Switch
-          checked={s.showAllBands}
-          onChange={(v) => updateSettings({ showAllBands: v })}
-          label="Show all named bands"
-        />
-        <p className="small">{NAMED.map((b) => `${b.name} ${b.low}-${b.high}`).join(', ')}</p>
-      </Section>
-      <Section title="Example waveform">
-        <div className="row">
-          <Field label="Example trial">
-            <NumberInput
-              label="Example trial"
-              value={s.exampleTrial + 1}
-              min={1}
-              max={data.shape[0]}
-              onCommit={(v) =>
-                updateSettings({ exampleTrial: Math.max(0, Math.min(data.shape[0] - 1, Math.round(v) - 1)) })
-              }
-            />
-          </Field>
-          <Field label="Example channel">
-            <Select
-              label="Example channel"
-              value={
-                s.exampleChannel && s.channels.includes(s.exampleChannel)
-                  ? s.exampleChannel
-                  : (s.channels[0] ?? '')
-              }
-              options={s.channels.map((c) => ({ value: c, label: c }))}
-              onChange={(v) => updateSettings({ exampleChannel: v })}
-            />
-          </Field>
-        </div>
-        <Status ep="band" />
-      </Section>
-    </aside>
+          <p className="small">{NAMED.map((b) => `${b.name} ${b.low}-${b.high}`).join(', ')}</p>
+        </Section>
+      </aside>
+      <aside className="workspace-tools band-tools-example" aria-label="Example waveform selection">
+        <Section title="Example waveform">
+          <div className="band-example-fields">
+            <Field label="Example trial">
+              <NumberInput
+                label="Example trial"
+                value={s.exampleTrial + 1}
+                min={1}
+                max={data.shape[0]}
+                onCommit={(v) =>
+                  updateSettings({ exampleTrial: Math.max(0, Math.min(data.shape[0] - 1, Math.round(v) - 1)) })
+                }
+              />
+            </Field>
+            <Field label="Example channel">
+              <Select
+                label="Example channel"
+                value={
+                  s.exampleChannel && s.channels.includes(s.exampleChannel)
+                    ? s.exampleChannel
+                    : (s.channels[0] ?? '')
+                }
+                options={s.channels.map((c) => ({ value: c, label: c }))}
+                onChange={(v) => updateSettings({ exampleChannel: v })}
+              />
+            </Field>
+          </div>
+          <Status ep="band" />
+        </Section>
+      </aside>
+    </div>
   );
 });
 

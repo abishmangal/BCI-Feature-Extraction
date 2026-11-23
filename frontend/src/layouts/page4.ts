@@ -29,13 +29,17 @@ export interface P4Geo {
 export function p4Geo(c: LayoutCtx): P4Geo {
   const w = W(c);
   const h = H(c);
-  const x0 = PAD + 56;
-  const x1 = w - PAD - 24;
+  const wide = w >= 760;
+  const spectrumControls = Math.min(450, w * 0.36);
+  const exampleControls = Math.min(208, Math.max(148, w * 0.17));
+  const x0 = wide ? PAD + 46 : PAD + 18;
+  const x1 = w - (wide ? spectrumControls + 32 : 24);
   const y0 = TOP + 26;
-  const y1 = TOP + (h - TOP) * 0.51;
+  const y1 = wide ? TOP + (h - TOP) * 0.57 - 35 : TOP + 194;
   const fmax = freqMax(c.data?.sfreq ?? 250);
   const nBins = Math.min(POOL.sine, Math.floor((fmax - 1) / 0.5) + 1);
   const fx = (f: number): number => x0 + ((f - 1) / (fmax - 1)) * (x1 - x0);
+  const px = (x0 + x1) / 2;
   const py = (y0 + y1) / 2;
   return {
     x0,
@@ -46,9 +50,13 @@ export function p4Geo(c: LayoutCtx): P4Geo {
     fx,
     nBins,
     binF: (k) => 1 + 0.5 * k,
-    prism: { x: w / 2, y: py, entryX: w / 2 - 22, exitX: w / 2 + 22 },
-    // the waveform panel starts below the frequency-axis label
-    wave: { x0, x1, y0: y1 + 48, y1: h - 18 },
+    prism: { x: px, y: py, entryX: px - 22, exitX: px + 22 },
+    wave: {
+      x0: wide ? exampleControls + 32 : PAD,
+      x1: w - 24,
+      y0: wide ? y1 + 68 : TOP + 868,
+      y1: h - 18,
+    },
   };
 }
 
@@ -211,9 +219,9 @@ export function layout(c: LayoutCtx): Layout {
     extra: {
       ...wv,
       label: ex
-        ? `Example trial ${ex.trial + 1}, channel ${ex.channel} (grey: raw, ink: filtered)`
+        ? `Trial ${ex.trial + 1} · ${ex.channel}`
         : 'Example waveform',
-      note: 'zero-phase Butterworth',
+      note: 'Raw (grey) · Filtered (ink)',
     },
   });
   setDecor(m, 4, 'prism', { alpha: 0, reveal: 0, extra: { x: g.prism.x, y: g.prism.y } });
