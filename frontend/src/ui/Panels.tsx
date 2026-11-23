@@ -350,41 +350,43 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
         </button>
       </Section>
       <Section title="Probe settings">
-        <fieldset className="probe-classes">
-          <legend>Classes to compare</legend>
-          <div className="row">
-            {data.classNames.map((name, k) => {
-              const checked = classes.includes(k);
-              return (
-                <button
-                  type="button"
-                  key={k}
-                  className={`chipbtn probe-class ${checked ? 'on' : ''}`}
-                  aria-pressed={checked}
-                  disabled={offline || (checked && classes.length <= 2)}
-                  onClick={() => updateSettings({
-                    probeClasses: checked ? classes.filter((c) => c !== k) : [...classes, k].sort((a, b) => a - b),
-                  })}
-                >
-                  <span className="sw" style={{ background: CLASS_HEX[k % CLASS_HEX.length] }} />
-                  {name}
-                </button>
-              );
-            })}
+        <div className="probe-blocks">
+          <div className="probe-comparison">
+            <fieldset className="probe-classes">
+              <legend>Classes to compare</legend>
+              <div className="row">
+                {data.classNames.map((name, k) => {
+                  const checked = classes.includes(k);
+                  return (
+                    <button
+                      type="button"
+                      key={k}
+                      className={`chipbtn probe-class ${checked ? 'on' : ''}`}
+                      aria-pressed={checked}
+                      disabled={offline || (checked && classes.length <= 2)}
+                      onClick={() => updateSettings({
+                        probeClasses: checked ? classes.filter((c) => c !== k) : [...classes, k].sort((a, b) => a - b),
+                      })}
+                    >
+                      <span className="sw" style={{ background: CLASS_HEX[k % CLASS_HEX.length] }} />
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="field-hint">
+                {offline ? 'Class comparison requires the backend.' : 'Keep at least two classes selected.'}
+              </div>
+            </fieldset>
+            {sep ? (
+              <p className="readout" data-testid="separability">
+                separability {(sep.accuracy * 100).toFixed(1)}% (chance {(sep.chance * 100).toFixed(0)}%),{' '}
+                {sep.folds}-fold LDA
+                {sep.foldMessage ? <span className="small"> {sep.foldMessage}</span> : null}
+              </p>
+            ) : null}
+            <Status ep="window" />
           </div>
-          <div className="field-hint">
-            {offline ? 'Class comparison requires the backend.' : 'Keep at least two classes selected.'}
-          </div>
-        </fieldset>
-        {sep ? (
-          <p className="readout" data-testid="separability">
-            separability {(sep.accuracy * 100).toFixed(1)}% (chance {(sep.chance * 100).toFixed(0)}%),{' '}
-            {sep.folds}-fold LDA
-            {sep.foldMessage ? <span className="small"> {sep.foldMessage}</span> : null}
-          </p>
-        ) : null}
-        <Status ep="window" />
-        <div className="probe-editors">
           <ProbeEditor axis="x" />
           <ProbeEditor axis="y" />
         </div>

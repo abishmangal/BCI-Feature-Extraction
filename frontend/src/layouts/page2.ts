@@ -22,13 +22,15 @@ export function p2Geo(c: LayoutCtx): P2Geo {
   const w = W(c);
   const h = H(c);
   const controlsWidth = Math.min(530, w * 0.42);
-  const split = (TOP + h) / 2;
+  const wide = w >= 860;
+  const split = wide ? (TOP + h) / 2 : TOP + 300;
+  const probeWidth = Math.min(850, w * 0.68);
   const bx0 = PAD + 14;
   const bx1 = w - controlsWidth - 18;
   const by0 = TOP + 4;
   const by1 = split - 30;
-  const plotX = controlsWidth + 62;
-  const plotY = split + 32;
+  const plotX = wide ? probeWidth + 62 : 62;
+  const plotY = split + (wide ? 32 : w >= 560 ? 270 : 570);
   const d = c.data!;
   const K = d.classNames.length;
   const M = Math.max(1, c.slots.shown.length);

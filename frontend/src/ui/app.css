@@ -743,7 +743,7 @@ a:focus-visible {
   overflow: auto;
 }
 .stage-host:has(.window-workspace) {
-  min-height: 500px;
+  min-height: 650px;
 }
 .window-workspace {
   position: absolute;
@@ -756,7 +756,6 @@ a:focus-visible {
   width: calc(min(530px, 42%) - 18px);
   margin: 4px 16px 12px;
   padding: 10px 12px;
-  overflow: auto;
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: var(--panel);
@@ -764,6 +763,10 @@ a:focus-visible {
 }
 .window-workspace > .psec:first-child {
   justify-self: end;
+}
+.window-workspace > .psec:nth-child(2) {
+  width: calc(min(850px, 68%) - 18px);
+  align-self: start;
 }
 .window-workspace h3 {
   margin: 0 0 8px;
@@ -802,10 +805,53 @@ a:focus-visible {
 .probe-class[aria-pressed='false'] .sw {
   opacity: 0.35;
 }
-.probe-editors {
+.probe-blocks {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(185px, 100%), 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px;
+}
+.probe-comparison {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.probe-blocks .probe-card {
+  margin: 0;
+}
+.probe-blocks .probe-card > .row:first-of-type {
+  display: grid;
+  gap: 0;
+}
+.probe-blocks .select-trigger {
+  min-width: 0;
+  width: 100%;
+}
+.probe-blocks .num {
+  width: 66px;
+  max-width: 100%;
+}
+.probe-class {
+  max-width: 100%;
+  white-space: normal;
+}
+@media (max-width: 859px) {
+  .stage-host:has(.window-workspace) {
+    min-height: 1050px;
+  }
+  .window-workspace {
+    grid-template-rows: 300px minmax(0, 1fr);
+  }
+  .window-workspace > .psec:nth-child(2) {
+    width: calc(100% - 32px);
+  }
+}
+@media (max-width: 559px) {
+  .stage-host:has(.window-workspace) {
+    min-height: 1350px;
+  }
+  .probe-blocks {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Page 5: settings pane inside an expanded card. */
