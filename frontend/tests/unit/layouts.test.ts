@@ -211,7 +211,7 @@ it('keeps matrix tabs and the feature race inside their respective regions', () 
   const narrow = p7Geo({ ...ctx, stageSize: { width: 420, height: 1160, stageHeight: 1104 } });
   expect(narrow.metricsTop).toBeGreaterThan(narrow.strip.y1);
   expect(narrow.tabs.every((tab) => tab.x + tab.w <= narrow.vx1)).toBe(true);
-  expect(narrow.tabBottom).toBeGreaterThan(narrow.vy0 + 20);
+  expect(narrow.tabBottom).toBeGreaterThan(narrow.vy0 + narrow.tabs[0].h);
 });
 
 describe('time axis rules (section 3.1)', () => {

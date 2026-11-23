@@ -48,16 +48,16 @@ export function p7Geo(c: LayoutCtx): P7Geo {
   let tabX = vx0;
   let tabY = vy0;
   const tabs = VIEW_TABS.map((tab) => {
-    const width = Math.min(tab.label.length * 6.2 + 16, vx1 - vx0);
+    const width = Math.min(tab.label.length * 8 + 28, vx1 - vx0);
     if (tabX !== vx0 && tabX + width > vx1) {
       tabX = vx0;
-      tabY += 22;
+      tabY += 40;
     }
-    const rect = { ...tab, x: tabX, y: tabY, w: width - 6, h: 20 };
+    const rect = { ...tab, x: tabX, y: tabY, w: width - 8, h: 32 };
     tabX += width;
     return rect;
   });
-  const tabBottom = tabY + 20;
+  const tabBottom = tabY + 32;
   const my0 = tabBottom + 116;
   const rows = Math.max(1, c.slots.val.trials.length);
   const nFeat = Math.max(1, c.slots.val.nFeatures);
@@ -386,7 +386,7 @@ export const VIEW_TABS: { id: string; label: string }[] = [
   { id: 'distribution', label: 'Class distribution' },
   { id: 'scatter', label: 'Scatter (2 features)' },
   { id: 'pca', label: 'PCA 2-D' },
-  { id: 'tsne', label: 't-SNE (optional, display only)' },
+  { id: 'tsne', label: 't-SNE (display only)' },
 ];
 
 function groupRuns(fams: string[]): { start: number; end: number; label: string }[] {

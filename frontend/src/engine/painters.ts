@@ -1135,18 +1135,19 @@ function paintViews(v: ContainerView, ex: Ex): void {
   g.roundRect(x0 - 15, viewTop - 12, x1 - x0 + 27, y1 - viewTop + 16, 8)
     .stroke({ width: 1.5, color: COLORS.teal, alpha: 0.6 });
   // Tab strip (part of the stage; keyboard access through the accessibility overlay).
-  const tabs = (ex.tabs as { id: string; label: string; x: number; y: number; w: number }[]) ?? [];
+  const tabs = (ex.tabs as { id: string; label: string; x: number; y: number; w: number; h: number }[]) ?? [];
   tabs.forEach((t) => {
     const active = t.id === ex.view;
-    if (active)
-      g.moveTo(t.x, t.y + 18)
-        .lineTo(t.x + t.w, t.y + 18)
-        .stroke({ width: 2, color: COLORS.accent });
+    g.roundRect(t.x, t.y, t.w, t.h, 6)
+      .fill({ color: active ? COLORS.tealDark : COLORS.panel })
+      .stroke({ width: 1, color: active ? COLORS.tealDark : COLORS.hairline });
     text(v, `tab${t.id}`, t.label, {
-      x: t.x + 4,
-      y: t.y + 2,
-      size: 10,
-      color: active ? COLORS.accent : COLORS.grey,
+      ...GRAPH_LABEL,
+      x: t.x + t.w / 2,
+      y: t.y + t.h / 2,
+      ax: 0.5,
+      ay: 0.5,
+      color: active ? 0xffffff : COLORS.ink,
     });
   });
   if (ex.tag) text(v, 'tag', str(ex.tag), { x: x1, y: infoY, ax: 1, size: 9, color: COLORS.grey });
