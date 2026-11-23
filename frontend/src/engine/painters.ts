@@ -481,7 +481,15 @@ const DECOR: Record<string, DecorPaint> = {
       text(v, `d${t.label}`, t.label, { ...GRAPH_TICK, x: x0 - 7, y: t.y, ax: 1, ay: 0.5, alpha: r });
     }
     text(v, 'fx', 'Frequency (Hz)', { ...GRAPH_LABEL, x: x1, y: y1 + 24, ax: 1, alpha: r });
-    text(v, 'fy', 'Power spectral density (dB, µV²/Hz)', { ...GRAPH_LABEL, x: x0 - 27, y: y0 - 18, alpha: r });
+    text(v, 'fy', y1 - y0 < 240 ? 'Power (dB, µV²/Hz)' : 'Power spectral density (dB, µV²/Hz)', {
+      ...GRAPH_LABEL,
+      x: Math.max(13, x0 - 48),
+      y: (y0 + y1) / 2,
+      ax: 0.5,
+      ay: 0.5,
+      rot: -Math.PI / 2,
+      alpha: r,
+    });
     endText(v);
   },
   '4:bands': (v, ex) => {
