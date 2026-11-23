@@ -35,7 +35,7 @@ export function p3Geo(c: LayoutCtx): P3Geo {
   const diam = Math.max(1, Math.min(target, w - 2 * edge, bottom - top));
   const R = diam / 2;
   const center = c.stageSize.viewportCenter ?? { x: w / 2, y: h / 2 };
-  const cx = Math.max(edge + R, Math.min(center.x - Math.min(24, w * 0.03), w - edge - R));
+  const cx = Math.max(edge + R, Math.min(center.x - Math.min(36, w * 0.045), w - edge - R));
   const cy = Math.max(top + R, Math.min(center.y, bottom - R));
   const pos = d.positions.map((p) => (p ? { x: cx + p[0] * R, y: cy - p[1] * R } : null));
   let dmin = Infinity;
