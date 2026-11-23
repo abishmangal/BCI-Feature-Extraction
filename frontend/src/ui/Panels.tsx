@@ -1,5 +1,5 @@
 // Right-hand controls panel (320 px, collapsible; a bottom drawer below 1280 px). One panel per page.
-import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import {
   get,
   set,
@@ -46,9 +46,9 @@ const SAMPLE_FILE: Record<string, string> = {
   ssvep: 'example_ssvep.csv',
 };
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, children, ref }: { title: string; children: ReactNode; ref?: Ref<HTMLElement> }) {
   return (
-    <section className="psec">
+    <section className="psec" ref={ref}>
       <h3>{title}</h3>
       {children}
     </section>
@@ -322,6 +322,8 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   const sep = useStore((s) => s.results.window?.separability);
   const [probeReady, setProbeReady] = useState(false);
   const hasData = !!data;
+  const probeVisible = hasData && (reduced || probeReady);
+  const probePanel = usePanelFade<HTMLElement>(probeVisible, 0.8);
   useEffect(() => {
     if (!hasData || reduced || probeReady) return;
     const stop = engine.onFrame(() => {
@@ -340,7 +342,7 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   const setW = (start: number, end: number): void =>
     updateSettings({ window: { start: Math.max(t0, start), end: Math.min(t0 + len, end) } });
   return (
-    <div className="window-workspace" data-probe-ready={reduced || probeReady} data-reduced-motion={reduced}>
+    <div className="window-workspace" data-probe-ready={probeVisible}>
       <Section title="Time window settings">
         <div className="row">
           <Field label="start (s)">
@@ -364,7 +366,7 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
           Reset window
         </button>
       </Section>
-      <Section title="Probe settings">
+      <Section title="Probe settings" ref={probePanel}>
         <div className="probe-blocks">
           <div className="probe-comparison">
             <fieldset className="probe-classes">
@@ -1274,18 +1276,18 @@ const BasketFlip = memo(function BasketFlip() {
   return <Basket flipping />;
 });
 
-/** Sidebar content fades in (spring-driven opacity) as each page is revealed. */
-function FadeIn({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
+/** Use the same reveal spring for sidebar and in-page controls. */
+function usePanelFade<T extends HTMLElement>(visible = true, from = 0) {
+  const ref = useRef<T>(null);
   const reduced = useStore((s) => s.ui.reduceMotion);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || !visible) return;
     if (reduced) {
       el.style.opacity = '1';
       return;
     }
-    const a = new Scalar(0, 'reveal');
+    const a = new Scalar(from, 'reveal');
     a.t = 1;
     let raf = 0;
     let last = performance.now();
@@ -1295,10 +1297,15 @@ function FadeIn({ children }: { children: ReactNode }) {
       el.style.opacity = String(Math.max(0, Math.min(1, a.x)));
       if (m) raf = requestAnimationFrame(tick);
     };
-    el.style.opacity = '0';
+    el.style.opacity = String(from);
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [reduced]);
+  }, [from, reduced, visible]);
+  return ref;
+}
+
+function FadeIn({ children }: { children: ReactNode }) {
+  const ref = usePanelFade<HTMLDivElement>();
   return <div ref={ref}>{children}</div>;
 }
 
