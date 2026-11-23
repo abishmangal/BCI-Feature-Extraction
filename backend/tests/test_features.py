@@ -150,6 +150,20 @@ def test_percent_change_sign_and_baseline():
         tf2.check()
 
 
+def test_time_frequency_card_preview_does_not_cache_full_dataset():
+    X = np.random.default_rng(7).normal(size=(20, 6, 100))
+    bank = bank_from(X)
+    family = TFRegions({}, bank)
+    preview = family.preview()
+    assert preview["kind"] == "tfrect"
+    assert len(preview["map"]) == len(preview["freqs"])
+    assert not bank.cache
+
+    coefficients, *_ = family.tfr()
+    assert coefficients.shape[:2] == (20, 6)
+    assert bank.cache
+
+
 def test_asymmetry_pairs_and_sign():
     from app.channels import detect_pairs
     from app.montage import positions_for

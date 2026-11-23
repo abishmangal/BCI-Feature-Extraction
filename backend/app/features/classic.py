@@ -226,6 +226,14 @@ def cwt_power(X: np.ndarray, freqs: np.ndarray, sfreq: float, wavelet: str) -> n
     return coef
 
 
+def time_frequency_preview_indices(n_trials: int, n_channels: int) -> tuple[np.ndarray, np.ndarray]:
+    """Spread preview work across the recording while keeping the card request small."""
+    return (
+        np.linspace(0, n_trials - 1, min(12, n_trials), dtype=int),
+        np.linspace(0, n_channels - 1, min(4, n_channels), dtype=int),
+    )
+
+
 class Wavelet(Family):
     id = "wavelet"
     title = "Wavelet energy"
@@ -253,8 +261,9 @@ class Wavelet(Family):
         return e.reshape(len(idx), -1)
 
     def preview(self):
-        X = self.bank.Xw.astype(np.float64)
-        sub = X[:: max(1, len(X) // 40)]
+        X = self.bank.Xw
+        trials, channels = time_frequency_preview_indices(*X.shape[:2])
+        sub = X[trials[:, None], channels].astype(np.float64, copy=False)
         c = cwt_power(sub, self.freqs(), self.bank.sfreq, self.s.get("wavelet", "morlet"))
         p = (np.abs(c) ** 2).mean(axis=(0, 1))  # (freqs, samples)
         step = max(1, p.shape[1] // 40)

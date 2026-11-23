@@ -10,7 +10,7 @@ import numpy as np
 from scipy.signal import butter, sosfiltfilt, stft
 
 from . import Family, FeatureError
-from .classic import cwt_power
+from .classic import cwt_power, time_frequency_preview_indices
 
 OUTPUTS = ["mean_power", "max_power", "energy", "coef_mean", "coef_var", "coef_energy", "pct_change"]
 LABEL = {
@@ -103,24 +103,29 @@ class TFRegions(Family):
             raise FeatureError("Choose at least one output.")
 
     # TFR --------------------------------------------------------------------------------------
-    def tfr(self):
+    def tfr(self, *, preview=False):
         """(trials, channels, freqs, times) complex coefficients (or power for upstream), freqs, times."""
         key = ("tfr", self.source(), self.freq_range(), repr(self.bank.band))
-        hit = self.bank.cache.get(key)
+        hit = None if preview else self.bank.cache.get(key)
         if hit is not None:
             return hit
         lo, hi = self.freq_range()
+        n, ch = self.bank.Xfull.shape[:2]
+        trials, channels = time_frequency_preview_indices(n, ch) if preview else (slice(None), slice(None))
         if self.source() == "upstream":
             up = self.bank.upstream
-            P = up["tfr"][:, self.bank.upstream_ch_idx]
             f = up["tfr_freqs"]
             m = (f >= lo) & (f <= hi)
-            out = (np.sqrt(P[:, :, m]), f[m], up["tfr_times"], True)
+            channel_indices = np.asarray(self.bank.upstream_ch_idx)[channels]
+            trial_indices = np.arange(n)[trials]
+            P = up["tfr"][np.ix_(trial_indices, channel_indices, np.flatnonzero(m))]
+            out = (np.sqrt(P), f[m], up["tfr_times"], True)
         else:
             sf = self.bank.sfreq
             b = self.bank.band
             sos = butter(int(b["order"]), [b["low"], b["high"]], btype="bandpass", fs=sf, output="sos")
-            Xf = sosfiltfilt(sos, self.bank.Xfull.astype(np.float64), axis=-1)
+            X = self.bank.Xfull[trials[:, None], channels] if preview else self.bank.Xfull
+            Xf = sosfiltfilt(sos, X, axis=-1)
             if self.source() == "stft":
                 nper = int(min(round(sf / 2), Xf.shape[-1]))
                 f, t, Z = stft(Xf, fs=sf, nperseg=nper, noverlap=nper - max(1, nper // 8), axis=-1)
@@ -132,7 +137,8 @@ class TFRegions(Family):
                 freqs = np.linspace(lo, hi, 8)
                 C = cwt_power(Xf, freqs, sf, "morlet")  # (n, ch, freqs, samples)
                 out = (C, freqs, self.bank.times_full, False)
-        self.bank.cache[key] = out
+        if not preview:
+            self.bank.cache[key] = out
         return out
 
     def names(self):
@@ -193,7 +199,7 @@ class TFRegions(Family):
         return d
 
     def preview(self):
-        C, f, t, _ = self.tfr()
+        C, f, t, _ = self.tfr(preview=True)
         P = (np.abs(C) ** 2).mean(axis=(0, 1))
         step = max(1, P.shape[1] // 60)
         a, b = self.task()

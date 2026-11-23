@@ -34,6 +34,21 @@ export const TITLES: Record<FamilyId, string> = {
   autoencoder: 'Learned latent features (advanced)',
 };
 
+const DESCRIPTIONS: Record<FamilyId, string> = {
+  band_power: 'Signal energy in selected frequency bands.',
+  csp: 'Learned channel mixtures that separate class variances.',
+  hjorth: 'Activity, mobility, and complexity of the signal.',
+  wavelet: 'Energy at several frequencies from a wavelet transform.',
+  covariance: 'Channel relationships mapped to a tangent space.',
+  time_stats: 'Mean, spread, size, and shape of the waveform.',
+  window_means: 'Average amplitude in short time bins.',
+  spectral_features: 'Spectral power, peak frequency, centroid, and entropy.',
+  tf_regions: 'Power in a time-frequency region and change from baseline.',
+  asymmetry: 'Band-power differences between paired electrodes.',
+  complexity: 'Line length and fractal dimension of the signal.',
+  autoencoder: 'A learned, compressed representation of each trial.',
+};
+
 export const CARD_W = 200;
 export const CARD_H = 170;
 export const GAP = 16;
@@ -82,7 +97,7 @@ export function matches(c: LayoutCtx, f: FamilyId): boolean {
   const q = c.ui.search.trim().toLowerCase();
   if (!q) return true;
   const meta = c.backendResults.features?.cards?.[f];
-  const hay = `${TITLES[f]} ${f} ${meta?.explanation ?? ''} ${CATEGORY[f]}`.toLowerCase();
+  const hay = `${TITLES[f]} ${f} ${meta?.explanation ?? DESCRIPTIONS[f]} ${CATEGORY[f]}`.toLowerCase();
   return hay.includes(q);
 }
 
@@ -222,7 +237,7 @@ export function layout(c: LayoutCtx): Layout {
         baseWidth: g.baseWidth,
         baseHeight: g.baseHeight,
         title: TITLES[f],
-        explanation: meta?.explanation ?? '',
+        explanation: meta?.explanation ?? DESCRIPTIONS[f],
         count: meta?.error ? null : (meta?.count ?? null),
         error: meta?.error ?? null,
         units: meta?.units ? Array.from(new Set(meta.units.map(formatFeatureUnit))).join(', ') : '',
