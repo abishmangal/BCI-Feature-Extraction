@@ -747,9 +747,29 @@ function CodePanel() {
   const reduced = useStore((s) => s.ui.reduceMotion);
   const phase = useStore((s) => s.ui.exportPhase);
   const pre = useRef<HTMLPreElement>(null);
-  const [rect, setRect] = useState(() => p8Geo(buildCtx()).panel);
+  useLayoutEffect(() => {
+    const el = pre.current;
+    if (!el) return;
+    let width = -1;
+    let height = -1;
+    const align = () => {
+      const stage = engine.stage;
+      if (!stage || (stage.width === width && stage.height === height)) return;
+      width = stage.width;
+      height = stage.height;
+      const { x0, x1, y0, y1 } = p8Geo(buildCtx()).panel;
+      const inset = 2;
+      Object.assign(el.style, {
+        left: `${x0 + inset}px`,
+        top: `${y0 + inset}px`,
+        width: `${Math.max(0, x1 - x0 - 2 * inset)}px`,
+        height: `${Math.max(0, y1 - y0 - 2 * inset)}px`,
+      });
+    };
+    align();
+    return engine.onFrame(align);
+  }, []);
   useEffect(() => {
-    setRect(p8Geo(buildCtx()).panel);
     const el = pre.current;
     if (!el) return;
     el.textContent = '';
@@ -784,12 +804,9 @@ function CodePanel() {
       ref={pre}
       className="code"
       data-testid="code"
-      style={{
-        left: rect.x0 + 12,
-        top: rect.y0 + 14,
-        width: rect.x1 - rect.x0 - 24,
-        height: rect.y1 - rect.y0 - 26,
-      }}
+      tabIndex={0}
+      aria-label="Exported Python script"
+      onKeyDown={(e) => e.stopPropagation()}
     />
   );
 }

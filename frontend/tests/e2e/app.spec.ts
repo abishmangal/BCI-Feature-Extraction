@@ -339,6 +339,27 @@ test('both matrix download buttons work in both export modes', async ({ page, re
   }
 });
 
+test('export code scroll area stays inside the card when the stage changes size', async ({ page }) => {
+  await boot(page);
+  await pour(page);
+  await go(page, 8);
+  const code = page.getByTestId('code');
+  await expect(code).toContainText('import', { timeout: 30_000 });
+  const checkEdges = () => expect.poll(async () => {
+    const [stage, block] = await Promise.all([page.getByTestId('stage').boundingBox(), code.boundingBox()]);
+    if (!stage || !block) return Infinity;
+    const rightGap = stage.x + stage.width - block.x - block.width;
+    const bottomGap = stage.y + stage.height - block.y - block.height;
+    // The stage has 32 px side padding, a 56 px rail and a 16 px bottom margin for the export card.
+    return Math.max(Math.abs(rightGap - 34), Math.abs(bottomGap - 74));
+  }).toBeLessThan(2);
+  await checkEdges();
+  await page.setViewportSize({ width: 1300, height: 760 });
+  await checkEdges();
+  await page.getByRole('button', { name: 'Hide controls' }).click();
+  await checkEdges();
+});
+
 test('switching "Interpret as" changes the defaults', async ({ page }) => {
   await boot(page);
   const chans = [

@@ -222,6 +222,8 @@ body,
 .code {
   position: absolute;
   margin: 0;
+  padding: 12px;
+  border-radius: 6px;
   overflow: auto;
   font-family: var(--font-mono);
   font-size: 11px;
