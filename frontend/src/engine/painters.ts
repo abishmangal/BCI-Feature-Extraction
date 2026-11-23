@@ -1246,10 +1246,10 @@ function paintElectrode(v: ContainerView, ex: Ex): void {
         .circle(0, 0, 50 + 6 * (100 / 30))
         .stroke({ width: 6 * (100 / 30), color: COLORS.teal, alpha: 0.5 });
   }
-  if (ex.focused)
-    ring
-      .circle(0, 0, chip ? 0 : 50 + 12 * (100 / 30))
-      .stroke({ width: 2 * (100 / 30), color: COLORS.accent });
+  if (ex.focused) {
+    if (chip) ring.roundRect(-29, -16, 58, 32, 8).stroke({ width: 2, color: COLORS.accent });
+    else ring.circle(0, 0, 50 + 12 * (100 / 30)).stroke({ width: 2 * (100 / 30), color: COLORS.accent });
+  }
   const hidden = !!ex.labelHidden;
   text(v, 'l', str(ex.label), {
     x: 0,

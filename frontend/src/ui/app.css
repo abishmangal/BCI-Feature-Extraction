@@ -112,6 +112,45 @@ body,
   inset: 0;
   pointer-events: none;
 }
+.electrode-preview {
+  position: absolute;
+  right: 16px;
+  bottom: 62px;
+  width: min(312px, 48%);
+  padding: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--panel);
+  pointer-events: none;
+}
+.electrode-preview svg {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+.electrode-preview-left {
+  right: auto;
+  left: 16px;
+}
+.electrode-preview-axis,
+.electrode-preview-legend {
+  display: flex;
+  gap: 8px;
+}
+.electrode-preview-axis {
+  justify-content: space-between;
+}
+.electrode-preview-legend {
+  list-style: none;
+  flex-wrap: wrap;
+  padding: 0;
+  margin: 6px 0 0;
+}
+.electrode-preview-legend li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .ov {
   position: absolute;
   left: 0;

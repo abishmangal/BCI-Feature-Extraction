@@ -138,6 +138,7 @@ export function layout(c: LayoutCtx): Layout {
     const isInc = sel.has(name.toLowerCase());
     const chip = g.pos[i] === null;
     const r = isInc ? g.radius : 7;
+    const focused = focus === name;
     const val = values ? values[i] : null;
     m.set(`electrode:${i}`, {
       x: p.x,
@@ -145,17 +146,17 @@ export function layout(c: LayoutCtx): Layout {
       w: chip ? g.chipW : 2 * r,
       h: chip ? g.chipH : 2 * r,
       rotation: 0,
-      scaleX: 1,
-      scaleY: 1,
+      scaleX: focused ? 1.4 : 1,
+      scaleY: focused ? 1.4 : 1,
       alpha: 1,
       color: isInc ? COLORS.scalp : COLORS.excluded,
       extra: {
         label: name,
         included: isInc,
         chip,
-        labelSize: g.labelSize,
+        labelSize: focused ? Math.max(12, g.labelSize) : g.labelSize,
         labelHidden: g.labelsHoverOnly && focus !== name,
-        focused: focus === name,
+        focused,
         value: val,
         unit,
         region: d.regions[i],

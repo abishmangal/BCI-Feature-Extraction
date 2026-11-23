@@ -82,6 +82,7 @@ export function freeTags(s: AppState): string[] {
 
 export const PageHeader = memo(function PageHeader() {
   const page = useStore((s) => s.page);
+  const data = useStore((s) => s.data);
   const hint = useStore((s) => {
     const h = s.data?.preset.hints;
     if (!h) return null;
@@ -97,6 +98,11 @@ export const PageHeader = memo(function PageHeader() {
       <h1>{PAGE_TITLES[page - 1]}</h1>
       <p className="caption">{CAPTIONS[page - 1]}</p>
       {hint ? <p className="hint">{hint}</p> : null}
+      {data && page <= 3 ? (
+        <p className="hint">
+          {data.shape[0]} trials · {data.shape[1]} recorded channels · {data.sfreq} Hz
+        </p>
+      ) : null}
       <div className="tags">
         {presetTag ? <span className="tag">{presetTag}</span> : null}
         {upstream && page >= 2 && page <= 4 ? (

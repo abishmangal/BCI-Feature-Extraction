@@ -447,7 +447,7 @@ export function navigate(page: number): void {
   if (p === s.page) return;
   const visited = s.visited.includes(p) ? s.visited : [...s.visited, p];
   let ui = p === 8 || s.page === 8 ? { ...s.ui, exportPhase: 'chips-left' as const } : s.ui;
-  ui = { ...ui, expandFamily: null, panelHold: s.page === 5 && p === 6 };
+  ui = { ...ui, expandFamily: null, focusChannel: null, panelHold: s.page === 5 && p === 6 };
   set({ page: p, visited, ui });
   if (ui.panelHold)
     setTimeout(() => get().ui.panelHold && set({ ui: { ...get().ui, panelHold: false } }), 2300);

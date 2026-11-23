@@ -14,6 +14,7 @@ import { p5Geo, maxScroll, TITLES } from '../layouts/page5';
 import { p7Geo, VIEW_TABS, matrixInfo, RACE_TOP } from '../layouts/page7';
 import { p8Geo } from '../layouts/page8';
 import { FAMILY_IDS } from '../engine/registry';
+import { CLASS_HEX } from '../engine/colors';
 import type { FamilyId } from '../store/store';
 
 type Rect = { x: number; y: number; w: number; h: number; visible: boolean };
@@ -138,6 +139,65 @@ const elPos =
     const r = piecePos(id);
     return { ...r, visible: r.w > 1 };
   };
+
+function ElectrodePreview() {
+  const data = useStore((s) => s.data);
+  const channel = useStore((s) => s.ui.focusChannel);
+  const spark = useStore((s) => s.results.channels?.spark);
+  const shown = useStore((s) => s.settings.showClasses);
+  const offline = useStore((s) => s.offline);
+  const status = useStore((s) => s.status.channels);
+  if (!data || !channel) return null;
+  const index = data.channels.indexOf(channel);
+  if (index < 0) return null;
+  const onRight = (data.positions[index]?.[0] ?? 0) > 0;
+  const traces = data.classNames.flatMap((name, k) => {
+    if (!spark || !shown.includes(k)) return [];
+    const offset = (index * data.classNames.length + k) * 60;
+    const points = spark.subarray(offset, offset + 60);
+    return [{ name, color: CLASS_HEX[k % CLASS_HEX.length], points }];
+  });
+
+  return (
+    <section
+      className={`electrode-preview${onRight ? ' electrode-preview-left' : ''}`}
+      aria-label={`${channel} waveform preview`}
+    >
+      <strong>{channel}</strong>
+      <div className="small">{offline ? 'Default sample window' : 'Selected time window'} · Class means</div>
+      {status.error ? <p className="small">{status.error}</p> : status.loading || !spark ? (
+        <p className="small">Loading waveform…</p>
+      ) : traces.length ? (
+        <>
+          <svg viewBox="0 0 280 100" role="img" aria-label={`${channel} scaled EEG amplitude over time`}>
+            <line x1="0" x2="280" y1="50" y2="50" stroke="var(--hairline)" />
+            {traces.map(({ name, color, points }) => (
+              <polyline
+                key={name}
+                points={Array.from(points, (value, i) => `${(280 * i) / 59},${50 - 94 * value}`).join(' ')}
+                fill="none"
+                stroke={color}
+                strokeWidth="2"
+              />
+            ))}
+          </svg>
+          <div className="electrode-preview-axis small">
+            <span>Window start</span>
+            <span>Window end</span>
+          </div>
+          <ul className="electrode-preview-legend small">
+            {traces.map(({ name, color }) => (
+              <li key={name}>
+                <span className="sw" style={{ background: color }} />
+                {name}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : <p className="small">Select a class to show its waveform.</p>}
+    </section>
+  );
+}
 
 function WindowHandles() {
   const has = useStore((s) => !!s.data);
@@ -795,6 +855,7 @@ export function StageHost() {
         {hasData && page === 7 ? <MatrixOverlay /> : null}
         <RailOverlay />
       </div>
+      {hasData && page === 3 ? <ElectrodePreview /> : null}
       {hasData && page === 5 ? <CardToolbar /> : null}
       {hasData && page === 8 ? <CodePanel /> : null}
       {hasData && page === 7 ? <ComputingBanner /> : null}
