@@ -237,6 +237,7 @@ export function layout(c: LayoutCtx): Layout {
         const fraction = i / 4;
         return { fraction, label: String(Number((lo + fraction * (hi - lo)).toPrecision(3))) };
       }) : [],
+      accuracy: res?.separability?.accuracy,
       xLabel: res ? probeLabel(res.probe.spec.x) : '',
       yLabel: res ? probeLabel(res.probe.spec.y) : '',
     },

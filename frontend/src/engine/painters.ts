@@ -258,7 +258,15 @@ const DECOR: Record<string, DecorPaint> = {
       ...GRAPH_LABEL,
       rot: -Math.PI / 2,
     });
-    text(v, 't', 'Class separability', { ...GRAPH_TITLE, x: x0, y: y0 - 24 });
+    const score = typeof ex.accuracy === 'number' && Number.isFinite(ex.accuracy)
+      ? `${(ex.accuracy * 100).toFixed(1)}%`
+      : '';
+    const stackedTitle = score && w < 240;
+    const titleY = y0 - (stackedTitle ? 43 : 24);
+    text(v, 't', stackedTitle || !score ? 'Class separability' : `Class separability · ${score}`, {
+      ...GRAPH_TITLE, x: x0, y: titleY,
+    });
+    if (stackedTitle) text(v, 'score', score, { ...GRAPH_LABEL, x: x0, y: y0 - 22 });
     endText(v);
   },
   // ----------------------------------------------------------------- page 3

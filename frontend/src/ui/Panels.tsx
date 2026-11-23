@@ -384,6 +384,13 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
         >
           Reset window
         </button>
+        {sep ? (
+          <p className="readout" data-testid="separability">
+            Class separability {(sep.accuracy * 100).toFixed(1)}% (chance {(sep.chance * 100).toFixed(0)}%),{' '}
+            {sep.folds}-fold LDA
+            {sep.foldMessage ? <span className="small"> {sep.foldMessage}</span> : null}
+          </p>
+        ) : null}
       </Section>
       <Section title="Probe settings" ref={probePanel}>
         <div className="probe-blocks">
@@ -414,13 +421,6 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
                 {offline ? 'Class comparison requires the backend.' : 'Keep at least two classes selected.'}
               </div>
             </fieldset>
-            {sep ? (
-              <p className="readout" data-testid="separability">
-                separability {(sep.accuracy * 100).toFixed(1)}% (chance {(sep.chance * 100).toFixed(0)}%),{' '}
-                {sep.folds}-fold LDA
-                {sep.foldMessage ? <span className="small"> {sep.foldMessage}</span> : null}
-              </p>
-            ) : null}
             <Status ep="window" />
           </div>
           <ProbeEditor axis="x" />
