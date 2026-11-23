@@ -550,8 +550,10 @@ function CardPaneOverlay({ f }: { f: FamilyId }) {
         const below = r.y + r.h + 6;
         const above = r.y - height - 6;
         const y = below + height <= bottom ? below : Math.max(g.gy0, above);
-        el.style.transform = `translate(${g.gx0}px, ${y}px)`;
-        el.style.width = `${Math.min(g.gw, 320)}px`;
+        const width = Math.min(g.gw, 320);
+        const x = Math.max(g.gx0, Math.min(r.x, g.gx0 + g.gw - width));
+        el.style.transform = `translate(${x}px, ${y}px)`;
+        el.style.width = `${width}px`;
         el.style.height = `${height}px`;
         el.style.opacity = r.visible ? '1' : '0';
         return;
@@ -562,7 +564,7 @@ function CardPaneOverlay({ f }: { f: FamilyId }) {
       el.style.transform = `translate(${Math.round(x0)}px, ${Math.round(r.y + 10)}px)`;
       el.style.width = `${Math.max(0, Math.round(w))}px`;
       el.style.height = `${Math.max(0, Math.round(r.h - 20))}px`;
-      el.style.opacity = w > 120 * g.s ? '1' : '0';
+      el.style.opacity = w >= 120 ? '1' : '0';
     };
     write();
     const off = engine.onFrame(write);

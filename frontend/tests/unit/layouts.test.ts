@@ -194,7 +194,9 @@ it('fills the available feature grid on a wide stage and reserves room for setti
   expect(g.slotOf(3).x + (g.baseWidth * g.s) / 2).toBeCloseTo(g.gx0 + g.gw);
   expect(g.slotOf(11).y + (g.baseHeight * g.s) / 2).toBeCloseTo(g.gy0 + g.gh);
   const expanded = p5Geo({ ...desktop, ui: { ...desktop.ui, expandFamily: g.visible[3] } });
-  expect(expanded.widthOf(3) * expanded.s).toBeGreaterThan(g.baseWidth * g.s + 200);
+  expect(expanded.widthOf(3)).toBeCloseTo(g.baseWidth * 1.5);
+  expect(expanded.slotOf(3).x - (g.baseWidth * g.s) / 2 + expanded.widthOf(3) * expanded.s)
+    .toBeCloseTo(g.gx0 + g.gw);
   const narrow = p5Geo({ ...ctx, stageSize: { width: 360, height: 680, stageHeight: 624 } });
   expect(narrow.floatingPane).toBe(true);
 });

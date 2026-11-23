@@ -99,8 +99,7 @@ export function flipRect(c: LayoutCtx): { x: number; y: number; w: number; h: nu
   return { x: cx - w / 2, y: cy - h / 2, w, h };
 }
 
-/** Row-mates of an expanded card shrink to this fraction of the normal card scale. */
-export const SHRINK = 0.6;
+const HOVER_WIDTH_SCALE = 1.5;
 
 export function p5Geo(c: LayoutCtx): P5Geo {
   const gx0 = PAD;
@@ -130,7 +129,7 @@ export function p5Geo(c: LayoutCtx): P5Geo {
   const sc = Math.min(1.35, cardHeight / CARD_H);
   const baseWidth = cardWidth / sc;
   const baseHeight = cardHeight / sc;
-  const floatingPane = cols < 3;
+  const floatingPane = cols < 3 || cardWidth * (HOVER_WIDTH_SCALE - 1) < 140;
   const visible = FAMILY_IDS.filter((f) => matches(c, f) && !c.settings.features.includes(f));
   const ex = c.ui.expandFamily as FamilyId | null;
   const expanded = ex && visible.includes(ex) ? ex : null;
@@ -138,16 +137,12 @@ export function p5Geo(c: LayoutCtx): P5Geo {
   const expRow = ek >= 0 && !floatingPane ? Math.floor(ek / cols) : -1;
   const rows = Math.max(1, Math.ceil(visible.length / cols));
   const scroll = Math.min(c.ui.scrollY, Math.max(0, rows * (cardHeight + GAP) - GAP - gh));
-  const maxPaneWidth = Math.max(340, (cols - 1) * cardWidth * (1 - SHRINK));
-  const nInRow = (r: number): number => Math.min(cols, visible.length - r * cols);
-  // In the expanded card's row the other cards shrink (uniformly) and the expanded card takes the rest.
-  const scaleOf = (k: number): number => (Math.floor(k / cols) === expRow && k !== ek ? sc * SHRINK : sc);
-  const widthOf = (k: number): number => {
-    if (k !== ek || floatingPane) return baseWidth;
-    const others = nInRow(expRow) - 1;
-    const px = gw - others * (cardWidth * SHRINK + GAP);
-    return Math.min(baseWidth + maxPaneWidth / sc, Math.max(baseWidth, px / sc));
-  };
+  const rowMates = expRow < 0 ? 0 : Math.min(cols, visible.length - expRow * cols) - 1;
+  const overflow = Math.max(0, (rowMates + HOVER_WIDTH_SCALE) * cardWidth + rowMates * GAP - gw);
+  const rowMateScale = rowMates ? 1 - overflow / (rowMates * cardWidth) : 1;
+  const scaleOf = (k: number): number =>
+    Math.floor(k / cols) === expRow && k !== ek ? sc * rowMateScale : sc;
+  const widthOf = (k: number): number => baseWidth * (k === ek && !floatingPane ? HOVER_WIDTH_SCALE : 1);
   const pos: { x: number; y: number }[] = [];
   for (let k = 0; k < visible.length; k++) {
     const r = Math.floor(k / cols);

@@ -1,6 +1,6 @@
 // Painters: draw low-count containers (electrodes, cards, chips, rail) and decor from layout extras.
 // Graphics are rebuilt only when extras, data, stage size or a reveal spring change; never per frame otherwise.
-import { BitmapText, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { BitmapText, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import type { ContainerView, Painters } from './stage';
 import type { Kind } from './registry';
 import { CATEGORY_COLORS, CLASS_COLORS, COLORS, mix } from './colors';
@@ -25,7 +25,7 @@ function spacedTicks<T extends { label: string }>(ticks: T[], position: (tick: T
 }
 
 // ---------------------------------------------------------------------------------------------
-// Text helpers: BitmapText objects are created once per (view, key) and reused (never per frame).
+// Cache text per view and style. Cards use high-resolution canvas text for their compact copy.
 function text(
   view: ContainerView,
   key: string,
@@ -43,15 +43,15 @@ function text(
     wrap?: number;
     align?: 'left' | 'center';
   },
-): BitmapText {
-  const map = (view.state.texts ??= new Map<string, BitmapText>()) as Map<string, BitmapText>;
+): BitmapText | Text {
+  const map = (view.state.texts ??= new Map<string, BitmapText | Text>()) as Map<string, BitmapText | Text>;
   const used = (view.state.used ??= new Set<string>()) as Set<string>;
   const font = o.font ?? 'mono';
   const size = o.size ?? 10;
   const fkey = `${key}|${font}|${size}|${o.wrap ?? 0}`;
   let t = map.get(fkey);
   if (!t) {
-    t = new BitmapText({
+    const options = {
       text: s,
       style: {
         fontFamily: font === 'mono' ? 'JetBrains Mono' : font === 'serif' ? 'Fraunces' : 'Inter',
@@ -61,7 +61,8 @@ function text(
         wordWrapWidth: o.wrap ?? 100,
         align: o.align ?? 'left',
       },
-    });
+    };
+    t = view.state.highResolutionText ? new Text({ ...options, resolution: 3 }) : new BitmapText(options);
     map.set(fkey, t);
     ((view.state.textLayer as Container | undefined) ?? view.root).addChild(t);
   }
@@ -79,7 +80,7 @@ function beginText(view: ContainerView): void {
   (view.state.used as Set<string> | undefined)?.clear();
 }
 function endText(view: ContainerView): void {
-  const map = view.state.texts as Map<string, BitmapText> | undefined;
+  const map = view.state.texts as Map<string, BitmapText | Text> | undefined;
   const used = view.state.used as Set<string> | undefined;
   if (!map) return;
   for (const [k, t] of map) if (!used?.has(k)) t.visible = false;
@@ -1392,8 +1393,8 @@ function paintCard(v: ContainerView, ex: Ex): void {
     x: x0 + 10,
     y: ty,
     font: 'sans',
-    size: 9,
-    color: COLORS.grey,
+    size: 10,
+    color: COLORS.ink,
     wrap: w - 20,
   });
   const err = ex.error as string | null;
@@ -1745,6 +1746,7 @@ export function createPainters(): Painters {
     init(kind: Kind, _id: string, view: ContainerView) {
       if (kind === 'card') {
         const tl = new Container();
+        view.state.highResolutionText = true;
         view.state.textLayer = tl;
         gfx(view, 'bg');
         gfx(view, 'pv');
