@@ -90,7 +90,6 @@ function ClassChips() {
 
 // ------------------------------------------------------------------------------------- page 1
 export const LoadControls = memo(function LoadControls() {
-  const data = useStore((s) => s.data);
   const form = useStore((s) => s.csvForm);
   const sample = useStore((s) => s.sampleChoice);
   const montages = useStore((s) => s.paradigms?.montages ?? DEFAULT_MONTAGES);
@@ -98,7 +97,6 @@ export const LoadControls = memo(function LoadControls() {
   const fileRef = useRef<HTMLInputElement>(null);
   const npzRef = useRef<HTMLInputElement>(null);
   const setForm = (p: Partial<typeof form>): void => set({ csvForm: { ...get().csvForm, ...p } });
-  const prov = data?.provenance;
   return (
     <div className="workspace-tools load-tools">
       <Section title="Upload EEG data">
@@ -216,54 +214,60 @@ export const LoadControls = memo(function LoadControls() {
           </Field>
         </div>
       </Section>
-      {data ? (
-        <>
-          <Section title="Dataset">
-            <dl className="kv" data-testid="summary">
-              <dt>trials</dt>
-              <dd>{data.shape[0]}</dd>
-              <dt>channels</dt>
-              <dd>{data.shape[1]}</dd>
-              <dt>sfreq</dt>
-              <dd>{data.sfreq} Hz</dd>
-              <dt>epoch</dt>
-              <dd>{epochSpan(data).len.toFixed(3)} s</dd>
-              <dt>tmin</dt>
-              <dd>{data.tmin} s</dd>
-              <dt>baseline</dt>
-              <dd>{data.baseline ? `${data.baseline.start} to ${data.baseline.end} s` : 'none'}</dd>
-            </dl>
-            <ul className="classes">
-              {data.classNames.map((n, k) => (
-                <li key={n}>
-                  <span className="sw" style={{ background: CLASS_HEX[k % 6] }} />
-                  {n} <span className="mono">({data.classCounts[k]})</span>
-                </li>
-              ))}
-            </ul>
-            {data.preset.facts ? (
-              <Info text={data.preset.facts}>
-                <button className="btn ghost small">About this paradigm (i)</button>
-              </Info>
-            ) : null}
-            {data.warnings.map((w) => (
-              <Msg key={w} kind="warn">
-                {w}
-              </Msg>
-            ))}
-          </Section>
-          <Section title="Input provenance">
-            <dl className="kv">
-              <dt>source</dt>
-              <dd>{prov?.source}</dd>
-              <dt>units</dt>
-              <dd>{prov?.units ?? 'uV'}</dd>
-              <dt>artifact steps</dt>
-              <dd>{prov?.artifact_steps?.length ? JSON.stringify(prov.artifact_steps) : 'none'}</dd>
-            </dl>
-          </Section>
-        </>
-      ) : null}
+    </div>
+  );
+});
+
+export const DatasetCards = memo(function DatasetCards() {
+  const data = useStore((s) => s.data);
+  if (!data) return null;
+  const prov = data.provenance;
+  return (
+    <div className="workspace-tools dataset-cards">
+      <Section title="Dataset">
+        <dl className="kv" data-testid="summary">
+          <dt>trials</dt>
+          <dd>{data.shape[0]}</dd>
+          <dt>channels</dt>
+          <dd>{data.shape[1]}</dd>
+          <dt>sfreq</dt>
+          <dd>{data.sfreq} Hz</dd>
+          <dt>epoch</dt>
+          <dd>{epochSpan(data).len.toFixed(3)} s</dd>
+          <dt>tmin</dt>
+          <dd>{data.tmin} s</dd>
+          <dt>baseline</dt>
+          <dd>{data.baseline ? `${data.baseline.start} to ${data.baseline.end} s` : 'none'}</dd>
+        </dl>
+        <ul className="classes">
+          {data.classNames.map((n, k) => (
+            <li key={n}>
+              <span className="sw" style={{ background: CLASS_HEX[k % 6] }} />
+              {n} <span className="mono">({data.classCounts[k]})</span>
+            </li>
+          ))}
+        </ul>
+        {data.preset.facts ? (
+          <Info text={data.preset.facts}>
+            <button className="btn ghost small">About this paradigm (i)</button>
+          </Info>
+        ) : null}
+        {data.warnings.map((w) => (
+          <Msg key={w} kind="warn">
+            {w}
+          </Msg>
+        ))}
+      </Section>
+      <Section title="Input provenance">
+        <dl className="kv">
+          <dt>source</dt>
+          <dd>{prov?.source}</dd>
+          <dt>units</dt>
+          <dd>{prov?.units ?? 'uV'}</dd>
+          <dt>artifact steps</dt>
+          <dd>{prov?.artifact_steps?.length ? JSON.stringify(prov.artifact_steps) : 'none'}</dd>
+        </dl>
+      </Section>
     </div>
   );
 });

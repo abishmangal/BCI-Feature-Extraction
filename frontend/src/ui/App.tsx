@@ -2,7 +2,7 @@ import { Profiler, useEffect } from 'react';
 import * as RTooltip from '@radix-ui/react-tooltip';
 import { PageHeader, ShapeBadge, TopBar } from './Shell';
 import { StageHost } from './StageHost';
-import { ChannelsControls, ControlsPanel, LoadControls, MatrixControls, TransformControls } from './Panels';
+import { ChannelsControls, ControlsPanel, DatasetCards, LoadControls, MatrixControls, TransformControls } from './Panels';
 import { get, navigate, store, useStore } from '../store/store';
 import { startApp } from '../store/effects';
 
@@ -85,6 +85,7 @@ export function App() {
               </div>
             ) : null}
             <StageHost />
+            {workspace === 'load' ? <DatasetCards /> : null}
             {workspace === 'channels' ? <ChannelsControls /> : workspace === 'transform' ? <TransformControls /> : <ControlsPanel />}
           </main>
         </div>

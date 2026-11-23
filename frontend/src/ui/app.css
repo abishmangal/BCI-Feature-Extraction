@@ -942,10 +942,11 @@ a:focus-visible {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 12px 0 0;
 }
-.load-tools > .psec {
+.load-tools > .psec,
+.dataset-cards > .psec {
   min-width: 0;
 }
-.load-tools .kv dd {
+.dataset-cards .kv dd {
   overflow-wrap: anywhere;
 }
 .upload-zone {
@@ -976,6 +977,28 @@ a:focus-visible {
 }
 .load-workspace > .stage-host {
   min-height: 230px;
+}
+.dataset-cards {
+  flex: none;
+  justify-content: flex-start;
+  padding: 12px 16px 16px;
+}
+@media (min-width: 900px) {
+  .load-workspace:has(> .dataset-cards) {
+    display: grid;
+    grid-template: "upload upload" auto "stage cards" minmax(330px, 1fr)
+      / minmax(0, 1fr) clamp(280px, 25vw, 360px);
+  }
+  .load-workspace:has(> .dataset-cards) > .load-content {
+    grid-area: upload;
+  }
+  .load-workspace:has(> .dataset-cards) > .stage-host {
+    grid-area: stage;
+  }
+  .dataset-cards {
+    grid-area: cards;
+    overflow: auto;
+  }
 }
 @media (max-width: 680px) {
   .load-tools {
