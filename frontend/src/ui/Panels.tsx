@@ -1,5 +1,5 @@
 // Right-hand controls panel (320 px, collapsible; a bottom drawer below 1280 px). One panel per page.
-import { memo, useEffect, useRef, type ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   get,
   set,
@@ -23,6 +23,7 @@ import { api } from '../api/client';
 import { decodeF32 } from '../api/f32';
 import { Field, Info, Msg, MultiToggle, NumberInput, Select, Switch, Toggle } from './controls';
 import { CLASS_HEX } from '../engine/colors';
+import { engine } from '../engine/wiring';
 import { TITLES } from '../layouts/page5';
 import { Basket } from './Basket';
 import { Scalar } from '../engine/scalar';
@@ -316,7 +317,20 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   const data = useStore((s) => s.data);
   const classes = useStore((s) => s.settings.probeClasses);
   const offline = useStore((s) => s.offline);
+  const reduced = useStore((s) => s.ui.reduceMotion);
   const sep = useStore((s) => s.results.window?.separability);
+  const [probeReady, setProbeReady] = useState(false);
+  const hasData = !!data;
+  useEffect(() => {
+    if (!hasData || reduced || probeReady) return;
+    const stop = engine.onFrame(() => {
+      if (!engine.core.allSettled()) return;
+      stop();
+      setProbeReady(true);
+    });
+    engine.wake();
+    return stop;
+  }, [hasData, probeReady, reduced]);
   if (!data) return <div className="window-empty"><Msg>Load data on page 1 first.</Msg></div>;
   const { t0, len } = epochSpan(data);
   const presets = data.preset.windowPresets.map((p) => (p.full ? { ...p, start: t0, end: t0 + len } : p));
@@ -325,7 +339,7 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   const setW = (start: number, end: number): void =>
     updateSettings({ window: { start: Math.max(t0, start), end: Math.min(t0 + len, end) } });
   return (
-    <div className="window-workspace">
+    <div className="window-workspace" data-probe-ready={reduced || probeReady} data-reduced-motion={reduced}>
       <Section title="Time window settings">
         <div className="row">
           <Field label="start (s)">
