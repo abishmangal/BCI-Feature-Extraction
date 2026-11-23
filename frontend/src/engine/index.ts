@@ -90,7 +90,16 @@ export class Engine<Ctx = unknown> {
   stageSize(): StageSize {
     const w = this.stage?.width ?? 1280;
     const h = this.stage?.height ?? 800;
-    return { width: w, height: h, stageHeight: h - 56 };
+    const rect = this.canvas?.parentElement?.getBoundingClientRect();
+    const viewport = rect && this.canvas?.ownerDocument.documentElement;
+    return {
+      width: w,
+      height: h,
+      stageHeight: h - 56,
+      viewportCenter: viewport && rect
+        ? { x: viewport.clientWidth / 2 - rect.left, y: viewport.clientHeight / 2 - rect.top }
+        : undefined,
+    };
   }
 
   private handleResize(): void {

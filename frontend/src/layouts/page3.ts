@@ -28,12 +28,15 @@ export function p3Geo(c: LayoutCtx): P3Geo {
   const hasTray = nUn > 0;
   const w = W(c);
   const h = H(c);
-  let diam = hasTray ? 380 : 440;
-  if (N > 40 && h - TOP - (hasTray ? 150 : 70) >= 520) diam = 520;
-  diam = Math.max(220, Math.min(diam, h - TOP - (hasTray ? 150 : 60)));
+  const top = TOP + 16;
+  const bottom = h - (hasTray ? 126 : 34);
+  const edge = 20;
+  const target = 1.5 * (N > 40 ? 520 : hasTray ? 380 : 440);
+  const diam = Math.max(1, Math.min(target, w - 2 * edge, bottom - top));
   const R = diam / 2;
-  const cx = w / 2 - 40;
-  const cy = TOP + 24 + R;
+  const center = c.stageSize.viewportCenter ?? { x: w / 2, y: h / 2 };
+  const cx = Math.max(edge + R, Math.min(center.x - Math.min(24, w * 0.03), w - edge - R));
+  const cy = Math.max(top + R, Math.min(center.y, bottom - R));
   const pos = d.positions.map((p) => (p ? { x: cx + p[0] * R, y: cy - p[1] * R } : null));
   let dmin = Infinity;
   const pts = pos.filter((p): p is { x: number; y: number } => p !== null);
@@ -52,7 +55,9 @@ export function p3Geo(c: LayoutCtx): P3Geo {
     const perRow = Math.max(1, Math.floor((w - 120) / (chipW + 6)));
     const rows = Math.ceil(nUn / perRow);
     const used = Math.min(nUn, perRow);
-    const x0 = cx - (used * (chipW + 6)) / 2 + chipW / 2;
+    const halfWidth = (used * (chipW + 6) - 6) / 2;
+    const trayCenter = Math.max(halfWidth + 8, Math.min(cx, w - halfWidth - 8));
+    const x0 = trayCenter - halfWidth + chipW / 2;
     for (let k = 0; k < nUn; k++) {
       const row = Math.floor(k / perRow);
       const col = k % perRow;

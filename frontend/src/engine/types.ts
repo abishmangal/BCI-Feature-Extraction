@@ -28,6 +28,8 @@ export interface StageSize {
   height: number;
   /** Stage area excludes the 56 px rail zone at the bottom. */
   stageHeight: number;
+  /** Viewport midpoint in stage coordinates. */
+  viewportCenter?: { x: number; y: number };
 }
 
 export type Layout = Map<string, TargetState>;
