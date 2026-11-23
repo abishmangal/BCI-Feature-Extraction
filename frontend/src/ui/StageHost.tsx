@@ -5,7 +5,7 @@ import { get, navigate, set, updateSettings, updateUi, useStore } from '../store
 import { loadCsv, loadNpz } from '../store/effects';
 import { hideTip, registerTooltip, showTip } from './tooltip';
 import { PageHeader, RailNav, ShapeBadge } from './Shell';
-import { CardPane } from './Panels';
+import { CardPane, TimeWindowControls } from './Panels';
 import { railNodes, epochSpan, windowSnap, minWindow, freqMax } from '../layouts/common';
 import { p2Geo } from '../layouts/page2';
 import { p3Geo, channelXY } from '../layouts/page3';
@@ -934,6 +934,7 @@ export function StageHost() {
         {hasData && page === 7 ? <MatrixOverlay /> : null}
         <RailOverlay />
       </div>
+      {page === 2 ? <TimeWindowControls /> : null}
       {hasData && page === 5 ? <CardToolbar /> : null}
       {hasData && page === 8 ? <CodePanel /> : null}
       {hasData && page === 7 ? <ComputingBanner /> : null}

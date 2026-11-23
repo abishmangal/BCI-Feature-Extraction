@@ -148,7 +148,10 @@ def window(body: dict):
     ds, s = _body_ds(body)
     if "start" in body and "end" in body:
         s = {**s, "window": {"start": body["start"], "end": body["end"]}}
-    return _with_hash(wmod.window_response(ds, s, body), ds.id, s.get("window"), body.get("probe"))
+    return _with_hash(
+        wmod.window_response(ds, s, body), ds.id, s.get("window"),
+        body.get("probe") or s.get("probe"), s.get("band"), s.get("cvFolds"), s.get("probeClasses"),
+    )
 
 
 @app.post("/channels")

@@ -739,6 +739,74 @@ a:focus-visible {
 .probe-card.probe-y legend {
   color: #9a6514;
 }
+.main:has(.window-workspace) {
+  overflow: auto;
+}
+.stage-host:has(.window-workspace) {
+  min-height: 500px;
+}
+.window-workspace {
+  position: absolute;
+  inset: 132px 0 56px;
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  pointer-events: none;
+}
+.window-workspace > .psec {
+  width: calc(min(530px, 42%) - 18px);
+  margin: 4px 16px 12px;
+  padding: 10px 12px;
+  overflow: auto;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--panel);
+  pointer-events: auto;
+}
+.window-workspace > .psec:first-child {
+  justify-self: end;
+}
+.window-workspace h3 {
+  margin: 0 0 8px;
+}
+.window-workspace .field,
+.window-workspace .probe-card {
+  min-width: 0;
+}
+.window-workspace .btn {
+  margin-top: 6px;
+}
+.window-empty {
+  position: absolute;
+  top: 132px;
+  left: 32px;
+}
+.probe-classes {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.probe-classes legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-weight: 600;
+}
+.probe-classes .field-hint {
+  margin-top: 4px;
+}
+.probe-class {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.probe-class[aria-pressed='false'] .sw {
+  opacity: 0.35;
+}
+.probe-editors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(185px, 100%), 1fr));
+  gap: 6px;
+}
 
 /* Page 5: settings pane inside an expanded card. */
 .card-pane {

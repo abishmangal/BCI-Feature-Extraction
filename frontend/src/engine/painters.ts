@@ -209,23 +209,31 @@ const DECOR: Record<string, DecorPaint> = {
     beginText(v);
     const x0 = num(ex.x0);
     const y0 = num(ex.y0);
-    const s = num(ex.size, 160);
-    g.rect(x0, y0, s, s).fill({ color: COLORS.panel }).stroke({ width: 1, color: COLORS.hairline });
-    dashed(g, x0, y0 + s, x0 + s, y0, 2, 3);
+    const w = num(ex.width);
+    const h = num(ex.height);
+    g.rect(x0, y0, w, h).fill({ color: COLORS.panel }).stroke({ width: 1, color: COLORS.hairline });
+    const ticks = (ex.ticks ?? []) as { fraction: number; label: string }[];
+    ticks.forEach(({ fraction, label }, i) => {
+      const x = x0 + w * fraction;
+      const y = y0 + h * (1 - fraction);
+      g.moveTo(x, y0).lineTo(x, y0 + h).moveTo(x0, y).lineTo(x0 + w, y)
+        .stroke({ width: 1, color: COLORS.hairline, alpha: 0.5 });
+      text(v, `xt${i}`, label, { x, y: y0 + h + 5, ax: 0.5, size: 10, color: COLORS.grey });
+      text(v, `yt${i}`, label, { x: x0 - 6, y, ax: 1, ay: 0.5, size: 10, color: COLORS.grey });
+    });
+    dashed(g, x0, y0 + h, x0 + w, y0, 2, 3);
     g.stroke({ width: 1, color: COLORS.grey });
-    text(v, 'x', str(ex.xLabel), { x: x0 + s / 2, y: y0 + s + 4, ax: 0.5, size: 9, color: COLORS.grey });
+    text(v, 'x', str(ex.xLabel), { x: x0 + w / 2, y: y0 + h + 22, ax: 0.5, size: 11, color: COLORS.grey });
     text(v, 'y', str(ex.yLabel), {
-      x: x0 - 4,
-      y: y0 + s / 2,
+      x: x0 - 48,
+      y: y0 + h / 2,
       ax: 0.5,
       ay: 1,
-      size: 9,
+      size: 11,
       color: COLORS.grey,
       rot: -Math.PI / 2,
     });
-    text(v, 'sep', str(ex.sep), { x: x0, y: y0 + s + 20, size: 12, color: COLORS.ink });
-    text(v, 'ch', str(ex.chance), { x: x0, y: y0 + s + 36, size: 10, color: COLORS.grey });
-    text(v, 't', 'probe features', { x: x0, y: y0 - 14, size: 9, color: COLORS.grey });
+    text(v, 't', 'Class separability', { x: x0, y: y0 - 22, size: 14, color: COLORS.ink });
     endText(v);
   },
   // ----------------------------------------------------------------- page 3

@@ -115,6 +115,7 @@ export interface WindowResponse {
   window: { start: number; end: number };
   nSamples: number;
   env: F32;
+  probeClasses?: number[];
   probe: { x: F32; y: F32; spec: { x: ProbeFeature; y: ProbeFeature } };
   separability: { accuracy: number; std: number; chance: number; folds: number; foldMessage: string | null };
 }

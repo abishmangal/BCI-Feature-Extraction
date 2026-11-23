@@ -58,6 +58,7 @@ export interface Settings {
   band: { low: number; high: number; order: number };
   showClasses: number[];
   probe: { x: ProbeFeature; y: ProbeFeature };
+  probeClasses: number[];
   baselineVisible: boolean;
   map: MapSettings;
   features: FamilyId[];
@@ -242,6 +243,7 @@ export function defaultSettings(data: Data | null, prev?: Settings): Settings {
     band: { ...p.defaultBand },
     showClasses: Array.from({ length: K }, (_, i) => i),
     probe: { x: { ...p.probe.x }, y: { ...p.probe.y } },
+    probeClasses: Array.from({ length: K }, (_, i) => i),
     baselineVisible: true,
     map: {
       metric: p.mapMetric.metric,

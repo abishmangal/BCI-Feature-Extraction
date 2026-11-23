@@ -14,6 +14,7 @@ from conftest import default_settings
 from app import evaluate as ev
 from app import export as ex
 from app import window as wmod
+from app.contract import ValidationError, decode_f32
 from app.selection import CorrelationStep, ProjectStep, RankStep, VarianceStep, fisher_score
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -94,6 +95,23 @@ def test_window_inside_baseline_collapses_separability(samples):
     assert r["separability"]["accuracy"] < 0.62
     assert good["separability"]["accuracy"] > r["separability"]["accuracy"] + 0.1
     assert r["shape"] == [100, 22, 125]
+
+
+def test_window_compares_only_selected_classes(samples):
+    ds = samples["ssvep"]
+    settings = default_settings(ds)
+    full = wmod.window_response(ds, settings, {})
+    selected = wmod.window_response(ds, {**settings, "probeClasses": [0, 2]}, {})
+
+    assert selected["probeClasses"] == [0, 2]
+    assert full["separability"]["chance"] == pytest.approx(0.25)
+    assert selected["separability"]["chance"] == pytest.approx(0.5)
+    for axis in ("x", "y"):
+        np.testing.assert_array_equal(
+            decode_f32(full["probe"][axis]), decode_f32(selected["probe"][axis])
+        )
+    with pytest.raises(ValidationError, match="at least two"):
+        wmod.window_response(ds, {**settings, "probeClasses": [2]}, {})
 
 
 def test_selection_dimensions_and_tie_breaking():

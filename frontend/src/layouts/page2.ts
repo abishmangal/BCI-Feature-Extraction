@@ -1,6 +1,6 @@
 // Page 2: Time window. Trials as class-sorted bands; outside-window samples compress into 4 px strips.
 import type { Layout } from '../engine/types';
-import { COLORS, desaturate } from '../engine/colors';
+import { desaturate } from '../engine/colors';
 import { POOL } from '../engine/registry';
 import { type LayoutCtx, H, PAD, TOP, W, classColor, epochSpan, finish, setDecor, ticks } from './common';
 
@@ -14,17 +14,21 @@ export interface P2Geo {
   /** time (s) -> x (px) under the current mapping */
   xOf: (t: number) => number;
   mesh: { cx: number; w: number; u0: number; u1: number };
-  mini: { x0: number; y0: number; size: number };
+  mini: { x0: number; y0: number; width: number; height: number };
   warped: boolean;
 }
 
 export function p2Geo(c: LayoutCtx): P2Geo {
   const w = W(c);
   const h = H(c);
-  const bx0 = PAD + 44;
-  const bx1 = w - PAD - 230;
+  const controlsWidth = Math.min(530, w * 0.42);
+  const split = (TOP + h) / 2;
+  const bx0 = PAD + 14;
+  const bx1 = w - controlsWidth - 18;
   const by0 = TOP + 4;
-  const by1 = h - 70;
+  const by1 = split - 30;
+  const plotX = controlsWidth + 62;
+  const plotY = split + 32;
   const d = c.data!;
   const K = d.classNames.length;
   const M = Math.max(1, c.slots.shown.length);
@@ -80,7 +84,12 @@ export function p2Geo(c: LayoutCtx): P2Geo {
     rowTop,
     xOf,
     mesh,
-    mini: { x0: w - PAD - 170, y0: h - 70 - 200, size: 160 },
+    mini: {
+      x0: plotX,
+      y0: plotY,
+      width: Math.max(1, w - plotX - PAD),
+      height: Math.max(1, h - plotY - 52),
+    },
     warped,
   };
 }
@@ -155,20 +164,22 @@ export function layout(c: LayoutCtx): Layout {
       }
     }
   }
-  // Probe mini-plot dots.
+  // Probe scatter points keep their trial identity across window and class changes.
   const res = c.backendResults.window;
   const mini = g.mini;
+  const [lo, hi] = res ? probeRange(res.px, res.py) : [0, 1];
   if (res) {
-    const [lo, hi] = probeRange(res.px, res.py);
+    const classes = res.probeClasses ? new Set(res.probeClasses) : null;
     for (let r = 0; r < shown.length; r++) {
       const t = shown[r];
+      if (classes && !classes.has(d.labels[t])) continue;
       const vx = res.px[t];
       const vy = res.py[t];
       m.set(`dot:${r}`, {
-        x: mini.x0 + ((vx - lo) / (hi - lo)) * mini.size,
-        y: mini.y0 + mini.size - ((vy - lo) / (hi - lo)) * mini.size,
-        w: 5,
-        h: 5,
+        x: mini.x0 + ((vx - lo) / (hi - lo)) * mini.width,
+        y: mini.y0 + (1 - (vy - lo) / (hi - lo)) * mini.height,
+        w: 6,
+        h: 6,
         rotation: 0,
         scaleX: 1,
         scaleY: 1,
@@ -214,17 +225,18 @@ export function layout(c: LayoutCtx): Layout {
       pivot: { x: (fx0 + fx1) / 2, y: (g.by0 + g.by1) / 2 },
     },
   });
-  const sep = res?.separability;
   setDecor(m, 2, 'minimap', {
     extra: {
       x0: mini.x0,
       y0: mini.y0,
-      size: mini.size,
+      width: mini.width,
+      height: mini.height,
+      ticks: res ? Array.from({ length: 5 }, (_, i) => {
+        const fraction = i / 4;
+        return { fraction, label: String(Number((lo + fraction * (hi - lo)).toPrecision(3))) };
+      }) : [],
       xLabel: res ? probeLabel(res.probe.spec.x) : '',
       yLabel: res ? probeLabel(res.probe.spec.y) : '',
-      sep: sep ? `separability ${(sep.accuracy * 100).toFixed(0)}%` : 'separability ...',
-      chance: sep ? `chance ${(sep.chance * 100).toFixed(0)}%` : '',
-      ink: COLORS.ink,
     },
   });
   return finish(m, c);

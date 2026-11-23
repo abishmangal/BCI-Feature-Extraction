@@ -68,8 +68,8 @@ def probe_values(ds, Xw: np.ndarray, probe: dict, band: dict) -> np.ndarray:
     return np.log10(bp + 1e-12)
 
 
-def separability(F: np.ndarray, y: np.ndarray, folds: int, n_classes: int) -> dict:
-    counts = [int((y == k).sum()) for k in range(n_classes)]
+def separability(F: np.ndarray, y: np.ndarray, folds: int) -> dict:
+    counts = np.unique(y, return_counts=True)[1].tolist()
     k, msg = cv_folds(counts, folds)
     cv = StratifiedKFold(n_splits=k, shuffle=True, random_state=SEED)
     scores = cross_val_score(LinearDiscriminantAnalysis(), F, y, cv=cv)
@@ -91,12 +91,23 @@ def window_response(ds, settings: dict, body: dict) -> dict:
     px = probe_values(ds, Xw, probe["x"], sel["band"])
     py = probe_values(ds, Xw, probe["y"], sel["band"])
     F = np.c_[px, py]
-    sep = separability(F, ds.y, int(settings.get("cvFolds", 5)), len(ds.class_names))
+    n_classes = len(ds.class_names)
+    classes = settings.get("probeClasses", list(range(n_classes)))
+    if (
+        not isinstance(classes, list)
+        or any(type(k) is not int or not 0 <= k < n_classes for k in classes)
+        or len(set(classes)) != len(classes)
+        or len(classes) < 2
+    ):
+        raise ValidationError("Choose at least two distinct dataset classes for separability.")
+    selected = np.isin(ds.y, classes)
+    sep = separability(F[selected], ds.y[selected], int(settings.get("cvFolds", 5)))
     trials = display_trials(ds)
     return {
         "shape": [int(Xw.shape[0]), int(Xw.shape[1]), int(Xw.shape[2])],
         "window": sel["window"],
         "nSamples": int(Xw.shape[2]),
+        "probeClasses": classes,
         "env": encode_f32(envelopes(ds, trials)),
         "probe": {"x": encode_f32(px), "y": encode_f32(py), "spec": probe},
         "separability": sep,

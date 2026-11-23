@@ -210,8 +210,8 @@ export function layout(c: LayoutCtx): Layout {
   const g2 = p2Geo(c);
   for (let r = 0; r < shown.length; r++)
     m.set(`dot:${r}`, {
-      x: g2.mini.x0 + g2.mini.size,
-      y: g2.mini.y0 + g2.mini.size,
+      x: g2.mini.x0 + g2.mini.width,
+      y: g2.mini.y0 + g2.mini.height,
       w: 5,
       h: 5,
       scaleX: 0,

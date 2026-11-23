@@ -311,11 +311,13 @@ function ProbeEditor({ axis }: { axis: 'x' | 'y' }) {
   );
 }
 
-const Page2 = memo(function Page2() {
+export const TimeWindowControls = memo(function TimeWindowControls() {
   const w = useStore((s) => s.settings.window);
   const data = useStore((s) => s.data);
+  const classes = useStore((s) => s.settings.probeClasses);
+  const offline = useStore((s) => s.offline);
   const sep = useStore((s) => s.results.window?.separability);
-  if (!data) return <Msg>Load data on page 1 first.</Msg>;
+  if (!data) return <div className="window-empty"><Msg>Load data on page 1 first.</Msg></div>;
   const { t0, len } = epochSpan(data);
   const presets = data.preset.windowPresets.map((p) => (p.full ? { ...p, start: t0, end: t0 + len } : p));
   if (data.baseline && !presets.some((p) => p.label.startsWith('Baseline')))
@@ -323,8 +325,8 @@ const Page2 = memo(function Page2() {
   const setW = (start: number, end: number): void =>
     updateSettings({ window: { start: Math.max(t0, start), end: Math.min(t0 + len, end) } });
   return (
-    <>
-      <Section title="Window">
+    <div className="window-workspace">
+      <Section title="Time window settings">
         <div className="row">
           <Field label="start (s)">
             <NumberInput label="Window start" value={w.start} step={0.05} onCommit={(v) => setW(v, w.end)} />
@@ -347,9 +349,33 @@ const Page2 = memo(function Page2() {
           Reset window
         </button>
       </Section>
-      <Section title="Probe mini-plot">
-        <ProbeEditor axis="x" />
-        <ProbeEditor axis="y" />
+      <Section title="Probe settings">
+        <fieldset className="probe-classes">
+          <legend>Classes to compare</legend>
+          <div className="row">
+            {data.classNames.map((name, k) => {
+              const checked = classes.includes(k);
+              return (
+                <button
+                  type="button"
+                  key={k}
+                  className={`chipbtn probe-class ${checked ? 'on' : ''}`}
+                  aria-pressed={checked}
+                  disabled={offline || (checked && classes.length <= 2)}
+                  onClick={() => updateSettings({
+                    probeClasses: checked ? classes.filter((c) => c !== k) : [...classes, k].sort((a, b) => a - b),
+                  })}
+                >
+                  <span className="sw" style={{ background: CLASS_HEX[k % CLASS_HEX.length] }} />
+                  {name}
+                </button>
+              );
+            })}
+          </div>
+          <div className="field-hint">
+            {offline ? 'Class comparison requires the backend.' : 'Keep at least two classes selected.'}
+          </div>
+        </fieldset>
         {sep ? (
           <p className="readout" data-testid="separability">
             separability {(sep.accuracy * 100).toFixed(1)}% (chance {(sep.chance * 100).toFixed(0)}%),{' '}
@@ -358,8 +384,12 @@ const Page2 = memo(function Page2() {
           </p>
         ) : null}
         <Status ep="window" />
+        <div className="probe-editors">
+          <ProbeEditor axis="x" />
+          <ProbeEditor axis="y" />
+        </div>
       </Section>
-    </>
+    </div>
   );
 });
 
@@ -1667,13 +1697,14 @@ const Page8 = memo(function Page8() {
   );
 });
 
-const PANELS = [Page1, Page2, Page3, Page4, Page5, Page6, Page7, Page8];
+const PANELS = [Page1, null, Page3, Page4, Page5, Page6, Page7, Page8];
 
 export const ControlsPanel = memo(function ControlsPanel() {
   const page = useStore((s) => s.page);
   const open = useStore((s) => s.ui.panelOpen);
   const hold = useStore((s) => s.ui.panelHold);
   const P = hold ? BasketFlip : PANELS[page - 1];
+  if (!P) return null;
   return (
     <aside className={`panel ${open ? '' : 'closed'}`} aria-label="Controls">
       <button
