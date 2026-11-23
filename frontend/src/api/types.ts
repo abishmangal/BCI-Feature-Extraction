@@ -122,6 +122,7 @@ export interface WindowResponse {
 export interface ChannelsResponse {
   shape: number[];
   hash: string;
+  window?: { start: number; end: number };
   channels: string[];
   sparklines: F32; // (channels, classes, 60)
   map: {

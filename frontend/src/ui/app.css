@@ -815,7 +815,7 @@ a:focus-visible {
   display: grid;
   grid-template:
     "map stage selection" minmax(620px, 1fr)
-    / clamp(260px, 23vw, 360px) minmax(0, 1fr) clamp(260px, 23vw, 360px);
+    / clamp(280px, 25vw, 410px) minmax(0, 1fr) clamp(280px, 25vw, 410px);
   overflow: auto;
 }
 .channels-workspace > .stage-host {
@@ -838,14 +838,14 @@ a:focus-visible {
   padding-left: 0;
 }
 .channel-tools > .psec {
-  padding: 14px 16px;
+  padding: 16px 18px;
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: var(--panel);
 }
 .channel-tools h3 {
   margin: 0 0 8px;
-  font-size: 19px;
+  font-size: 22px;
 }
 .channel-tools p {
   margin: 6px 0;
@@ -853,6 +853,18 @@ a:focus-visible {
 .channel-tools .field {
   margin: 8px 0;
   min-width: 0;
+}
+.channel-tools .small,
+.channel-tools .field-hint {
+  font-size: 13px;
+}
+.channel-tools .field-label,
+.channel-tools .switch-row,
+.channel-tools .num,
+.channel-tools .select-trigger,
+.channel-tools .chipbtn,
+.channel-tools .toggle-item {
+  font-size: 14px;
 }
 .channel-tools .num,
 .channel-tools .select-trigger,

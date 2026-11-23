@@ -346,6 +346,7 @@ def channels_response(ds, settings: dict, body: dict) -> dict:
         cm = {"error": "; ".join(e.errors), "metric": m.get("metric")}
     return {
         "shape": [int(Xw.shape[0]), len(sel["ch_idx"]), int(Xw.shape[2])],
+        "window": sel["window"],
         "channels": sel["channels"],
         "sparklines": encode_f32(spark),
         "map": cm,

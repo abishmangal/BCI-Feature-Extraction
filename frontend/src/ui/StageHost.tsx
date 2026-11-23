@@ -168,6 +168,7 @@ function ElectrodePreview({ onEnter, onLeave }: { onEnter: () => void; onLeave: 
   const included = useStore((s) => channel !== null && s.settings.channels.includes(channel));
   const shown = useStore((s) => s.settings.showClasses);
   const offline = useStore((s) => s.offline);
+  const selectedWindow = useStore((s) => s.settings.window);
   const status = useStore((s) => s.status.channels);
   const index = data && channel ? data.channels.indexOf(channel) : -1;
   useLayoutEffect(() => {
@@ -211,6 +212,10 @@ function ElectrodePreview({ onEnter, onLeave }: { onEnter: () => void; onLeave: 
   if (!data || !channel || index < 0) return null;
   const spark = result?.spark;
   const value = result?.map.values?.[index];
+  const { t0, len } = epochSpan(data);
+  const window = result?.window ?? (offline ? data.preset.defaultWindow : selectedWindow);
+  const start = Math.max(t0, window.start);
+  const end = Math.min(t0 + len, window.end);
   const traces = data.classNames.flatMap((name, k) => {
     if (!spark || !shown.includes(k)) return [];
     const offset = (index * data.classNames.length + k) * 60;
@@ -253,8 +258,8 @@ function ElectrodePreview({ onEnter, onLeave }: { onEnter: () => void; onLeave: 
             ))}
           </svg>
           <div className="electrode-preview-axis small">
-            <span>Window start</span>
-            <span>Window end</span>
+            <span>{Number(start.toFixed(3))} s</span>
+            <span>{Number(end.toFixed(3))} s</span>
           </div>
           <ul className="electrode-preview-legend small">
             {traces.map(({ k, name, color }) => (

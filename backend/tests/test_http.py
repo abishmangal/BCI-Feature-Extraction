@@ -84,6 +84,7 @@ def test_endpoints(server):
         server, "/channels", {"dataset_id": ds["id"], "settings": s, "map": {"metric": "bandpower_change", "band": [8, 12], "mapClass": 0}}
     )
     assert c["shape"] == [100, 3, 500] and c["map"]["grid"]["shape"] == [64, 64]
+    assert c["window"] == s["window"]
     vals = dict(zip(ds["channels"], c["map"]["shownValues"], strict=True))
     assert max(vals, key=vals.get) == "C4"  # left hand: strongest decrease at C4
     c1, _ = _post(
