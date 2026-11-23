@@ -35,7 +35,11 @@ export function p4Geo(c: LayoutCtx): P4Geo {
   const x0 = wide ? PAD + 46 : PAD + 18;
   const x1 = w - (wide ? spectrumControls + 32 : 24);
   const y0 = TOP + 26;
-  const y1 = wide ? TOP + (h - TOP) * 0.57 - 35 : TOP + 194;
+  const waveBottom = h - 18;
+  // Match the control deck's lower row, at half the previous waveform height.
+  const waveHeight = Math.max(110, (waveBottom - y0) * 0.215 - 16);
+  const waveTop = wide ? waveBottom - waveHeight : TOP + 806;
+  const y1 = wide ? waveTop - 56 : TOP + 194;
   const fmax = freqMax(c.data?.sfreq ?? 250);
   const nBins = Math.min(POOL.sine, Math.floor((fmax - 1) / 0.5) + 1);
   const fx = (f: number): number => x0 + ((f - 1) / (fmax - 1)) * (x1 - x0);
@@ -54,8 +58,8 @@ export function p4Geo(c: LayoutCtx): P4Geo {
     wave: {
       x0: wide ? exampleControls + 32 : PAD,
       x1: w - 24,
-      y0: wide ? y1 + 68 : TOP + 868,
-      y1: h - 18,
+      y0: waveTop,
+      y1: wide ? waveBottom : waveTop + Math.max(110, (waveBottom - (TOP + 868)) / 2),
     },
   };
 }

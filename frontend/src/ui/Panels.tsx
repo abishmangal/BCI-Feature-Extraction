@@ -687,7 +687,7 @@ export const BandControls = memo(function BandControls() {
       <aside className="workspace-tools band-tools-example" aria-label="Example waveform selection">
         <Section title="Example waveform">
           <div className="band-example-fields">
-            <Field label="Example trial">
+            <Field label="Trial">
               <NumberInput
                 label="Example trial"
                 value={s.exampleTrial + 1}
@@ -698,7 +698,7 @@ export const BandControls = memo(function BandControls() {
                 }
               />
             </Field>
-            <Field label="Example channel">
+            <Field label="Channel">
               <Select
                 label="Example channel"
                 value={
