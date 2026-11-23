@@ -931,41 +931,43 @@ const DECOR: Record<string, DecorPaint> = {
     const x1 = num(ex.x1);
     const y0 = num(ex.y0);
     text(v, 't', 'Leakage check', { ...GRAPH_TITLE, x: x0, y: y0 });
+    let rowsY = y0 + 26;
     if (ex.noLearned) {
-      text(v, 'n', 'no learned steps selected: only the scaler could leak', {
+      const note = text(v, 'n', 'no learned steps selected: only the scaler could leak', {
         x: x0,
-        y: y0 + 24,
+        y: rowsY,
         ...GRAPH_LABEL,
         wrap: x1 - x0,
       });
+      rowsY += note.height + 8;
     }
     if (ex.shown) {
-      const w = x1 - x0 - 90;
+      const w = x1 - x0 - 124;
       const rows: [string, number][] = [
         ['correct', num(ex.correct)],
         ['leaky', num(ex.leaky)],
       ];
       rows.forEach(([lab, val], k) => {
-        const y = y0 + 48 + k * 26;
+        const y = rowsY + k * 26;
         g.rect(x0 + 70, y, w * val, 14).fill({ color: k === 0 ? COLORS.teal : COLORS.amber });
         text(v, `l${k}`, lab, { ...GRAPH_LABEL, x: x0, y: y - 1 });
         text(v, `v${k}`, `${(val * 100).toFixed(1)}%`, {
-          ...GRAPH_TICK, x: Math.min(x1, x0 + 124 + w * val), y: y - 1, ax: 1,
+          ...GRAPH_TICK, x: x1, y: y - 1, ax: 1,
         });
       });
       const gap = num(ex.gap);
       const xa = x0 + 70 + w * num(ex.correct);
       const xb = x0 + 70 + w * num(ex.leaky);
-      g.moveTo(xa, y0 + 98)
-        .lineTo(xa, y0 + 104)
-        .lineTo(xb, y0 + 104)
-        .lineTo(xb, y0 + 98)
+      g.moveTo(xa, rowsY + 48)
+        .lineTo(xa, rowsY + 54)
+        .lineTo(xb, rowsY + 54)
+        .lineTo(xb, rowsY + 48)
         .stroke({ width: 1.5, color: COLORS.ink });
       text(
         v,
         'gap',
         `leaky fit changed accuracy by ${gap >= 0 ? '+' : '-'}${Math.abs(gap).toFixed(1)} points`,
-        { ...GRAPH_LABEL, x: x0, y: y0 + 110, wrap: x1 - x0 },
+        { ...GRAPH_LABEL, x: x0, y: rowsY + 62, wrap: x1 - x0 },
       );
     } else if (!ex.noLearned) {
       text(v, 'h', 'flip the leakage switch to compare correct and leaky fits', {

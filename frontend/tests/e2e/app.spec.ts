@@ -282,7 +282,7 @@ test('feature cards: scrolling, searching and filtering', async ({ page }) => {
   await expect(page.getByTestId('feature-total')).toContainText('2 features');
 });
 
-test('page 7 selection drawer changes the final shape; React does not re-render per frame', async ({
+test('page 7 selection changes the final shape; React does not re-render per frame', async ({
   page,
 }) => {
   await boot(page);
@@ -290,7 +290,6 @@ test('page 7 selection drawer changes the final shape; React does not re-render 
   await go(page, 7);
   await expect(page.getByTestId('accuracy')).toBeVisible();
   await expect(page.getByTestId('shape-badge')).toHaveText('100 x 6');
-  await page.getByTestId('select-drawer').locator('summary').click();
   await page.getByRole('combobox', { name: 'Projection' }).click();
   await page.getByRole('option', { name: 'PCA' }).click();
   await expect(page.getByTestId('shape-badge')).toHaveText('100 x 2');

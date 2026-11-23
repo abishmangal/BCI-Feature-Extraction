@@ -98,7 +98,7 @@ export const PageHeader = memo(function PageHeader() {
       <h1>{PAGE_TITLES[page - 1]}</h1>
       <p className="caption">{CAPTIONS[page - 1]}</p>
       {hint ? <p className="hint">{hint}</p> : null}
-      {data && page <= 3 ? (
+      {data && page >= 2 && page <= 3 ? (
         <p className="hint">
           {data.shape[0]} trials · {data.shape[1]} recorded channels · {data.sfreq} Hz
         </p>

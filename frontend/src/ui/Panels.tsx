@@ -89,7 +89,7 @@ function ClassChips() {
 }
 
 // ------------------------------------------------------------------------------------- page 1
-const Page1 = memo(function Page1() {
+export const LoadControls = memo(function LoadControls() {
   const data = useStore((s) => s.data);
   const form = useStore((s) => s.csvForm);
   const sample = useStore((s) => s.sampleChoice);
@@ -100,31 +100,44 @@ const Page1 = memo(function Page1() {
   const setForm = (p: Partial<typeof form>): void => set({ csvForm: { ...get().csvForm, ...p } });
   const prov = data?.provenance;
   return (
-    <>
-      <Section title="Load">
-        <div className="row">
-          <button className="btn" onClick={() => fileRef.current?.click()} disabled={offline}>
-            Choose file...
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv,text/csv"
-            hidden
-            data-testid="csv-input"
-            onChange={(e) => e.target.files?.[0] && void loadCsv(e.target.files[0])}
-          />
-          <button className="btn" onClick={() => npzRef.current?.click()} disabled={offline}>
-            Load upstream NPZ
-          </button>
-          <input
-            ref={npzRef}
-            type="file"
-            accept=".npz"
-            hidden
-            data-testid="npz-input"
-            onChange={(e) => e.target.files?.[0] && void loadNpz(e.target.files[0])}
-          />
+    <div className="workspace-tools load-tools">
+      <Section title="Upload EEG data">
+        <div
+          className="upload-zone"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (offline) return;
+            const file = e.dataTransfer.files[0];
+            if (file?.name.toLowerCase().endsWith('.npz')) void loadNpz(file);
+            else if (file) void loadCsv(file);
+          }}
+        >
+          <p>Drop a CSV or upstream NPZ file here</p>
+          <div className="row">
+            <button className="btn" onClick={() => fileRef.current?.click()} disabled={offline}>
+              Choose CSV file
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,text/csv"
+              hidden
+              data-testid="csv-input"
+              onChange={(e) => e.target.files?.[0] && void loadCsv(e.target.files[0])}
+            />
+            <button className="btn" onClick={() => npzRef.current?.click()} disabled={offline}>
+              Load upstream NPZ
+            </button>
+            <input
+              ref={npzRef}
+              type="file"
+              accept=".npz"
+              hidden
+              data-testid="npz-input"
+              onChange={(e) => e.target.files?.[0] && void loadNpz(e.target.files[0])}
+            />
+          </div>
         </div>
         <Field label="Sample">
           <Select
@@ -144,24 +157,24 @@ const Page1 = memo(function Page1() {
         </div>
         <Status ep="dataset" />
       </Section>
-      <Section title="CSV fields">
-        <Field label="Sampling rate (Hz)">
-          <input
-            className="num"
-            value={form.sfreq}
-            onChange={(e) => setForm({ sfreq: e.target.value })}
-            aria-label="Sampling rate"
-          />
-        </Field>
-        <Field label="Time of first sample relative to the event, tmin (s)">
-          <input
-            className="num"
-            value={form.tmin}
-            onChange={(e) => setForm({ tmin: e.target.value })}
-            aria-label="tmin"
-          />
-        </Field>
-        <div className="row">
+      <Section title="CSV settings">
+        <div className="csv-settings">
+          <Field label="Sampling rate (Hz)">
+            <input
+              className="num"
+              value={form.sfreq}
+              onChange={(e) => setForm({ sfreq: e.target.value })}
+              aria-label="Sampling rate"
+            />
+          </Field>
+          <Field label="Time of first sample relative to the event, tmin (s)">
+            <input
+              className="num"
+              value={form.tmin}
+              onChange={(e) => setForm({ tmin: e.target.value })}
+              aria-label="tmin"
+            />
+          </Field>
           <Field label="Baseline start (s)">
             <input
               className="num"
@@ -180,28 +193,28 @@ const Page1 = memo(function Page1() {
               placeholder="none"
             />
           </Field>
+          <Field label="Montage">
+            <Select
+              label="Montage"
+              value={form.montage}
+              options={montages.map((m) => ({ value: m, label: m }))}
+              onChange={(m) => void changeMontage(m)}
+            />
+          </Field>
+          <Field label="Interpret as">
+            <Select
+              label="Interpret as"
+              value={form.interpret}
+              options={[
+                { value: 'custom', label: 'Custom' },
+                { value: 'motor_imagery', label: 'Motor imagery' },
+                { value: 'erp_p300', label: 'P300 / ERP' },
+                { value: 'ssvep', label: 'SSVEP' },
+              ]}
+              onChange={(v) => void interpretAs(v)}
+            />
+          </Field>
         </div>
-        <Field label="Montage">
-          <Select
-            label="Montage"
-            value={form.montage}
-            options={montages.map((m) => ({ value: m, label: m }))}
-            onChange={(m) => void changeMontage(m)}
-          />
-        </Field>
-        <Field label="Interpret as">
-          <Select
-            label="Interpret as"
-            value={form.interpret}
-            options={[
-              { value: 'custom', label: 'Custom' },
-              { value: 'motor_imagery', label: 'Motor imagery' },
-              { value: 'erp_p300', label: 'P300 / ERP' },
-              { value: 'ssvep', label: 'SSVEP' },
-            ]}
-            onChange={(v) => void interpretAs(v)}
-          />
-        </Field>
       </Section>
       {data ? (
         <>
@@ -251,7 +264,7 @@ const Page1 = memo(function Page1() {
           </Section>
         </>
       ) : null}
-    </>
+    </div>
   );
 });
 
@@ -1512,8 +1525,6 @@ export const MatrixControls = memo(function MatrixControls() {
           </p>
         ) : null}
         <Status ep="evaluate" />
-      </Section>
-      <Section title="Leakage">
         <Switch
           checked={!s.leakageGuard}
           onChange={(v) => {
@@ -1532,9 +1543,6 @@ export const MatrixControls = memo(function MatrixControls() {
             fit changed accuracy by {ev.gapPoints >= 0 ? '+' : '-'}
             {Math.abs(ev.gapPoints).toFixed(1)} points
           </p>
-        ) : null}
-        {ev && !ev.anyLearned ? (
-          <p className="small">no learned steps selected: only the scaler could leak</p>
         ) : null}
       </Section>
       <Section title="Scatter features">
@@ -1560,75 +1568,85 @@ export const MatrixControls = memo(function MatrixControls() {
           label="Show pre-selection matrix"
         />
       </Section>
-      <details className="psec drawer" data-testid="select-drawer">
-        <summary>Select & reduce</summary>
-        <Switch
-          checked={ss.variance.on}
-          onChange={(v) => setSel({ variance: { ...ss.variance, on: v } })}
-          label="1. Variance threshold"
-        />
-        <NumberInput
-          label="Variance threshold"
-          value={ss.variance.threshold}
-          step={0.001}
-          onCommit={(v) => setSel({ variance: { ...ss.variance, threshold: v } })}
-        />
-        <Switch
-          checked={ss.correlation.on}
-          onChange={(v) => setSel({ correlation: { ...ss.correlation, on: v } })}
-          label="2. Correlation pruning (|r|)"
-        />
-        <NumberInput
-          label="Correlation threshold"
-          value={ss.correlation.threshold}
-          step={0.01}
-          onCommit={(v) => setSel({ correlation: { ...ss.correlation, threshold: v } })}
-        />
-        <Switch
-          checked={ss.ranking.on}
-          onChange={(v) => setSel({ ranking: { ...ss.ranking, on: v } })}
-          label="3. Rank and keep top K"
-        />
-        <div className="row">
-          <Select
-            label="Ranking method"
-            value={ss.ranking.method}
-            options={[
-              { value: 'fisher', label: 'Fisher score' },
-              { value: 'mi', label: 'mutual information' },
-            ]}
-            onChange={(v) => setSel({ ranking: { ...ss.ranking, method: v as 'fisher' | 'mi' } })}
-          />
-          <NumberInput
-            label="Top K"
-            value={ss.ranking.topK}
-            min={1}
-            onCommit={(v) => setSel({ ranking: { ...ss.ranking, topK: Math.max(1, Math.round(v)) } })}
-          />
+      <section className="psec matrix-selection" aria-labelledby="matrix-selection-title">
+        <h3 id="matrix-selection-title">Select &amp; reduce</h3>
+        <div className="matrix-selection-grid">
+          <div>
+            <Switch
+              checked={ss.variance.on}
+              onChange={(v) => setSel({ variance: { ...ss.variance, on: v } })}
+              label="1. Variance threshold"
+            />
+            <NumberInput
+              label="Variance threshold"
+              value={ss.variance.threshold}
+              step={0.001}
+              onCommit={(v) => setSel({ variance: { ...ss.variance, threshold: v } })}
+            />
+          </div>
+          <div>
+            <Switch
+              checked={ss.correlation.on}
+              onChange={(v) => setSel({ correlation: { ...ss.correlation, on: v } })}
+              label="2. Correlation pruning (|r|)"
+            />
+            <NumberInput
+              label="Correlation threshold"
+              value={ss.correlation.threshold}
+              step={0.01}
+              onCommit={(v) => setSel({ correlation: { ...ss.correlation, threshold: v } })}
+            />
+          </div>
+          <div>
+            <Switch
+              checked={ss.ranking.on}
+              onChange={(v) => setSel({ ranking: { ...ss.ranking, on: v } })}
+              label="3. Rank and keep top K"
+            />
+            <div className="row">
+              <Select
+                label="Ranking method"
+                value={ss.ranking.method}
+                options={[
+                  { value: 'fisher', label: 'Fisher score' },
+                  { value: 'mi', label: 'mutual information' },
+                ]}
+                onChange={(v) => setSel({ ranking: { ...ss.ranking, method: v as 'fisher' | 'mi' } })}
+              />
+              <NumberInput
+                label="Top K"
+                value={ss.ranking.topK}
+                min={1}
+                onCommit={(v) => setSel({ ranking: { ...ss.ranking, topK: Math.max(1, Math.round(v)) } })}
+              />
+            </div>
+            <FisherEquation />
+          </div>
+          <div>
+            <Field label="4. Projection">
+              <Select
+                label="Projection"
+                value={ss.projection.method}
+                options={[
+                  { value: 'none', label: 'none' },
+                  { value: 'pca', label: 'PCA' },
+                  { value: 'lda', label: 'supervised LDA projection' },
+                ]}
+                onChange={(v) =>
+                  setSel({ projection: { ...ss.projection, method: v as 'none' | 'pca' | 'lda' } })
+                }
+              />
+            </Field>
+            <NumberInput
+              label="Components"
+              value={ss.projection.components}
+              min={1}
+              onCommit={(v) =>
+                setSel({ projection: { ...ss.projection, components: Math.max(1, Math.round(v)) } })
+              }
+            />
+          </div>
         </div>
-        <FisherEquation />
-        <Field label="4. Projection">
-          <Select
-            label="Projection"
-            value={ss.projection.method}
-            options={[
-              { value: 'none', label: 'none' },
-              { value: 'pca', label: 'PCA' },
-              { value: 'lda', label: 'supervised LDA projection' },
-            ]}
-            onChange={(v) =>
-              setSel({ projection: { ...ss.projection, method: v as 'none' | 'pca' | 'lda' } })
-            }
-          />
-        </Field>
-        <NumberInput
-          label="Components"
-          value={ss.projection.components}
-          min={1}
-          onCommit={(v) =>
-            setSel({ projection: { ...ss.projection, components: Math.max(1, Math.round(v)) } })
-          }
-        />
         {ss.projection.method === 'lda' ? (
           <p className="small">
             An LDA projection reduces the features to at most K-1 dimensions; it is not the same as choosing
@@ -1642,7 +1660,7 @@ export const MatrixControls = memo(function MatrixControls() {
             {ev.foldIsolation ? 'verified' : 'FAILED'}
           </p>
         ) : null}
-      </details>
+      </section>
     </div>
   );
 });
@@ -1751,7 +1769,7 @@ const Page8 = memo(function Page8() {
   );
 });
 
-const PANELS = [Page1, null, null, null, Page5, null, null, Page8];
+const PANELS = [null, null, null, null, Page5, null, null, Page8];
 
 export const ControlsPanel = memo(function ControlsPanel() {
   const page = useStore((s) => s.page);

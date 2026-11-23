@@ -281,12 +281,6 @@ body,
   font-size: 16px;
   margin: 4px 0 8px;
 }
-.drawer summary {
-  font-family: var(--font-serif);
-  font-size: 16px;
-  cursor: pointer;
-  padding: 4px 0;
-}
 .field {
   display: flex;
   flex-direction: column;
@@ -925,6 +919,75 @@ a:focus-visible {
   width: 100%;
   overflow-wrap: anywhere;
 }
+.load-workspace {
+  flex-direction: column;
+  overflow: auto;
+}
+.load-content {
+  width: min(100%, 1120px);
+  margin-inline: auto;
+  padding: 16px clamp(16px, 3vw, 32px) 0;
+}
+.load-intro .page-header,
+.load-intro .badge-wrap {
+  position: static;
+  max-width: none;
+}
+.load-intro .badge-wrap {
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.load-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 12px 0 0;
+}
+.load-tools > .psec {
+  min-width: 0;
+}
+.load-tools .kv dd {
+  overflow-wrap: anywhere;
+}
+.upload-zone {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--teal);
+  border-radius: 8px;
+  text-align: center;
+}
+.load-tools .row {
+  flex-wrap: wrap;
+}
+.upload-zone .row {
+  justify-content: center;
+}
+.csv-settings,
+.matrix-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+}
+.csv-settings .num,
+.csv-settings .select-trigger,
+.matrix-selection-grid .num {
+  width: 100%;
+}
+.load-workspace > .stage-host {
+  min-height: 230px;
+}
+@media (max-width: 680px) {
+  .load-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 400px) {
+  .csv-settings,
+  .matrix-selection-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .matrix-workspace {
   flex-direction: column;
   overflow: auto;
@@ -960,8 +1023,7 @@ a:focus-visible {
   padding: 10px 12px;
   overflow-wrap: anywhere;
 }
-.matrix-tools h3,
-.matrix-tools summary {
+.matrix-tools h3 {
   font-size: 17px;
 }
 .matrix-tools .field {
@@ -969,6 +1031,15 @@ a:focus-visible {
 }
 .matrix-tools .select-trigger {
   width: 100%;
+}
+.matrix-selection {
+  grid-column: span 2;
+}
+.matrix-selection-grid .row {
+  flex-wrap: wrap;
+}
+.matrix-selection-grid .row > * {
+  flex: 1 1 100px;
 }
 .matrix-workspace > .stage-host {
   min-height: 640px;
@@ -994,6 +1065,9 @@ a:focus-visible {
 @media (max-width: 480px) {
   .matrix-tools {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .matrix-selection {
+    grid-column: auto;
   }
 }
 @media (max-width: 899px) {

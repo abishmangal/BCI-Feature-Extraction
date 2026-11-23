@@ -82,7 +82,7 @@ export function p7Geo(c: LayoutCtx): P7Geo {
     metricsTop,
     metricsBottom,
     raceTop: metricsTop + 214,
-    raceBottom: metricsBottom - 133,
+    raceBottom: metricsBottom - 182,
     tabs,
     tabBottom,
     strip: { x0: vx0, x1: vx1, y0: vy1 + 10, y1: vy1 + 56 },

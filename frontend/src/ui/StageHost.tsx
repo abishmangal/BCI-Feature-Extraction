@@ -962,8 +962,8 @@ export function StageHost() {
     >
       <canvas ref={canvas} className="stage-canvas" data-testid="canvas" />
       <RailNav />
-      {page !== 7 ? <PageHeader /> : null}
-      {page !== 7 ? <ShapeBadge /> : null}
+      {page !== 1 && page !== 7 ? <PageHeader /> : null}
+      {page !== 1 && page !== 7 ? <ShapeBadge /> : null}
       <div className="overlay" ref={overlay} key={`ov${dataVersion}:${nChannels}`}>
         {hasData && page === 2 ? <WindowHandles /> : null}
         {hasData && page === 3 ? <ElectrodeOverlay /> : null}

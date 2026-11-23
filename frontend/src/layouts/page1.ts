@@ -2,12 +2,12 @@
 import type { Layout } from '../engine/types';
 import { COLORS } from '../engine/colors';
 import { POOL } from '../engine/registry';
-import { type LayoutCtx, H, TOP, W, classColor, finish, setDecor } from './common';
+import { type LayoutCtx, H, W, classColor, finish, setDecor } from './common';
 
 export function p1Stack(c: LayoutCtx): { x: number; y0: number; w: number; h: number; rowH: number } {
   const w = W(c) * 0.7;
-  const h = Math.min(520, H(c) - TOP - 40);
-  const y0 = (TOP + H(c)) / 2 - h / 2;
+  const h = Math.max(1, Math.min(520, H(c) - 64));
+  const y0 = (H(c) - h) / 2;
   const m = Math.max(1, c.slots.shown.length);
   return { x: W(c) / 2, y0, w, h, rowH: h / m };
 }
@@ -35,10 +35,6 @@ export function layout(c: LayoutCtx): Layout {
         winEnd: 1,
       });
     }
-    setDecor(m, 1, 'droptext', {
-      alpha: 1,
-      extra: { text: 'Drop a CSV here, or pour the sample data', x: W(c) / 2, y: y + 28 },
-    });
     return finish(m, c);
   }
   const st = p1Stack(c);
