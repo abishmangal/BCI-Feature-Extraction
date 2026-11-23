@@ -169,12 +169,16 @@ export function layout(c: LayoutCtx): Layout {
   // Probe scatter points keep their trial identity across window and class changes.
   const res = c.backendResults.window;
   const mini = g.mini;
+  const probeClasses = c.settings.probeClasses;
+  const scoreMatches = res?.probeClasses
+    ? probeClasses.join() === res.probeClasses.join()
+    : probeClasses.length === d.classNames.length;
   const [lo, hi] = res ? probeRange(res.px, res.py) : [0, 1];
   if (res) {
-    const classes = res.probeClasses ? new Set(res.probeClasses) : null;
+    const classes = new Set(probeClasses);
     for (let r = 0; r < shown.length; r++) {
       const t = shown[r];
-      if (classes && !classes.has(d.labels[t])) continue;
+      if (!classes.has(d.labels[t])) continue;
       const vx = res.px[t];
       const vy = res.py[t];
       m.set(`dot:${r}`, {
@@ -237,7 +241,7 @@ export function layout(c: LayoutCtx): Layout {
         const fraction = i / 4;
         return { fraction, label: String(Number((lo + fraction * (hi - lo)).toPrecision(3))) };
       }) : [],
-      accuracy: res?.separability?.accuracy,
+      accuracy: probeClasses.length >= 2 && scoreMatches ? res?.separability?.accuracy : undefined,
       xLabel: res ? probeLabel(res.probe.spec.x) : '',
       yLabel: res ? probeLabel(res.probe.spec.y) : '',
     },

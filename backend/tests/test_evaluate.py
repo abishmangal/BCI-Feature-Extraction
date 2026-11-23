@@ -110,8 +110,6 @@ def test_window_compares_only_selected_classes(samples):
         np.testing.assert_array_equal(
             decode_f32(full["probe"][axis]), decode_f32(selected["probe"][axis])
         )
-    with pytest.raises(ValidationError, match="at least two"):
-        wmod.window_response(ds, {**settings, "probeClasses": [2]}, {})
 
 
 def test_selection_dimensions_and_tie_breaking():
@@ -148,8 +146,6 @@ def test_four_class_lda_projection_and_decision_regions(samples):
 def test_zero_features_blocked(samples):
     ds = samples["erp_p300"]
     s = p300_default(ds, selectionSettings={"variance": {"on": True, "threshold": 1e12}})
-    from app.contract import ValidationError
-
     with pytest.raises(ValidationError):
         ev.evaluate_response(ds, s)
 

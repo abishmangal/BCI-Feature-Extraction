@@ -60,6 +60,19 @@ def default_settings(resp: dict) -> dict:
     }
 
 
+def write_p300_amplitude_maps(path: Path, body: dict, n_classes: int) -> None:
+    """Precompute class and difference maps for the offline P300 default window."""
+    maps = {
+        str(k): api.channels({**body, "map": {"metric": "mean_amplitude", "mapClass": k}})["map"]
+        for k in range(n_classes)
+    }
+    for a in range(n_classes):
+        for b in range(n_classes):
+            settings = {"metric": "mean_amplitude", "mapClass": "diff", "pair": {"a": a, "b": b}}
+            maps[f"{a}-{b}"] = api.channels({**body, "map": settings})["map"]
+    path.write_bytes(orjson.dumps(maps, option=orjson.OPT_SERIALIZE_NUMPY))
+
+
 def main() -> None:
     (ROOT / "sample").mkdir(exist_ok=True)
     pub = ROOT / "frontend" / "public"
@@ -87,6 +100,8 @@ def main() -> None:
             "export": api.export({**body, "export_mode": "exploratory"}),
         }
         (pub / "fallback" / f"{pid}.json").write_bytes(orjson.dumps(bundle, option=orjson.OPT_SERIALIZE_NUMPY))
+        if pid == "erp_p300":
+            write_p300_amplitude_maps(pub / "fallback" / "erp_p300_amplitude_maps.json", body, len(ds.class_names))
         print(pid, "ok", out.name, f"accuracy {bundle['evaluate']['correct']['mean']:.3f}")
     _ = np
 

@@ -268,7 +268,7 @@ export function layout(c: LayoutCtx): Layout {
 export function rampFor(c: LayoutCtx): { from: number; to: number; mid?: number } {
   const mp = c.settings.map;
   const K = c.data?.classNames.length ?? 2;
-  if (mp.mapClass === 'diff' && (mp.metric === 'bandpower_change' || mp.metric === 'snr'))
+  if (mp.mapClass === 'diff' && !mp.metric.startsWith('separability_'))
     return {
       from: classColor(Math.min(K - 1, mp.pair.b)),
       mid: COLORS.cream,
@@ -277,5 +277,6 @@ export function rampFor(c: LayoutCtx): { from: number; to: number; mid?: number 
   if (mp.metric === 'separability_bandpower' || mp.metric === 'separability_amplitude')
     return { from: COLORS.cream, to: COLORS.accent };
   const k = typeof mp.mapClass === 'number' ? mp.mapClass : 0;
+  if (mp.metric === 'mean_amplitude') return { from: COLORS.accent, mid: COLORS.cream, to: classColor(k) };
   return { from: COLORS.cream, to: classColor(k) };
 }

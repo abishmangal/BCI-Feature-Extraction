@@ -245,17 +245,26 @@ def channel_metric(ds, sel: dict, m: dict) -> dict:
         else:
             shown = np.clip(-vals, 0, None)  # strength of the decrease; increases clipped to 0
             legend_note = "shows the strength of the decrease (increases are clipped to 0)"
-    elif metric in ("separability_bandpower", "separability_amplitude"):
-        if metric == "separability_bandpower":
+    elif metric in ("separability_bandpower", "separability_amplitude", "mean_bandpower", "mean_amplitude"):
+        if metric in ("separability_bandpower", "mean_bandpower"):
             f, P = bmod.psd(Xw.astype(np.float64), ds.sfreq)
-            feat = np.log10(bmod.integrate(f, P, lo, hi) + 1e-12)
-            name = f"Class separability of band power, {lo:g}-{hi:g} Hz"
+            feat = bmod.integrate(f, P, lo, hi)
+            name = f"Band power, {lo:g}-{hi:g} Hz"
+            unit = "µV²"
         else:
             feat = Xw.astype(np.float64).mean(axis=-1)
-            name = "Class separability of mean amplitude"
-        vals = np.array([auc_sep(feat[:, c], ds.y, n_classes) for c in range(ds.X.shape[1])])
+            name = "Mean amplitude"
+            unit = "µV"
+        if metric.startswith("separability_"):
+            if metric == "separability_bandpower":
+                feat = np.log10(feat + 1e-12)
+            vals = np.array([auc_sep(feat[:, c], ds.y, n_classes) for c in range(ds.X.shape[1])])
+            name = "Class separability of " + name[0].lower() + name[1:]
+            unit = "0-1"
+        else:
+            vals, diverging = per_class(feat)
+            diverging = diverging or metric == "mean_amplitude"
         shown = vals
-        unit = "0-1"
     elif metric == "snr":
         f, P = bmod.psd(Xw.astype(np.float64), ds.sfreq)
         sf = sel["preset"].get("stimulusFrequencies")
@@ -326,7 +335,7 @@ def channels_response(ds, settings: dict, body: dict) -> dict:
         grid = interpolate_grid(pos, shown)
         finite = shown[np.isfinite(shown)]
         if cm["diverging"]:
-            lim = float(np.max(np.abs(finite))) if finite.size else 1.0
+            lim = max(1e-6, float(np.max(np.abs(finite)))) if finite.size else 1.0
             vmin, vmax = -lim, lim
         else:
             vmin = 0.0 if cm["metric"] != "snr" else float(min(0.0, finite.min())) if finite.size else 0.0

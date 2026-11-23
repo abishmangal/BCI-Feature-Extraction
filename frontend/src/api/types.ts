@@ -29,7 +29,7 @@ export interface ChannelPreset {
   default?: boolean;
 }
 export interface MapMetricSpec {
-  metric: 'bandpower_change' | 'separability_bandpower' | 'separability_amplitude' | 'snr';
+  metric: 'bandpower_change' | 'separability_bandpower' | 'separability_amplitude' | 'mean_amplitude' | 'mean_bandpower' | 'snr';
   band: [number, number] | null;
   mapClass: number | 'diff';
 }
@@ -117,7 +117,7 @@ export interface WindowResponse {
   env: F32;
   probeClasses?: number[];
   probe: { x: F32; y: F32; spec: { x: ProbeFeature; y: ProbeFeature } };
-  separability: { accuracy: number; std: number; chance: number; folds: number; foldMessage: string | null };
+  separability: { accuracy: number; std: number; chance: number; folds: number; foldMessage: string | null } | null;
 }
 export interface ChannelsResponse {
   shape: number[];

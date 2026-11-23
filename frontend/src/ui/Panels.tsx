@@ -338,7 +338,11 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   const classes = useStore((s) => s.settings.probeClasses);
   const offline = useStore((s) => s.offline);
   const reduced = useStore((s) => s.ui.reduceMotion);
-  const sep = useStore((s) => s.results.window?.separability);
+  const result = useStore((s) => s.results.window);
+  const scoreMatches = result?.probeClasses
+    ? classes.join() === result.probeClasses.join()
+    : classes.length === data?.classNames.length;
+  const sep = classes.length >= 2 && scoreMatches ? result?.separability : null;
   const [probeReady, setProbeReady] = useState(false);
   const hasData = !!data;
   const probeVisible = hasData && (reduced || probeReady);
@@ -406,7 +410,7 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
                       key={k}
                       className={`chipbtn probe-class ${checked ? 'on' : ''}`}
                       aria-pressed={checked}
-                      disabled={offline || (checked && classes.length <= 2)}
+                      disabled={checked && classes.length <= 1}
                       onClick={() => updateSettings({
                         probeClasses: checked ? classes.filter((c) => c !== k) : [...classes, k].sort((a, b) => a - b),
                       })}
@@ -418,7 +422,11 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
                 })}
               </div>
               <div className="field-hint">
-                {offline ? 'Class comparison requires the backend.' : 'Keep at least two classes selected.'}
+                {classes.length === 1
+                  ? 'Select another class to calculate separability.'
+                  : offline && !scoreMatches
+                    ? 'Offline separability is available for all classes together.'
+                    : 'Select one or more classes to show in the scatter plot.'}
               </div>
             </fieldset>
             <Status ep="window" />
@@ -436,6 +444,7 @@ export const ChannelsControls = memo(function ChannelsControls() {
   const data = useStore((s) => s.data);
   const chans = useStore((s) => s.settings.channels);
   const map = useStore((s) => s.settings.map);
+  const offline = useStore((s) => s.offline);
   const err = useStore((s) => s.results.channels?.map.error ?? null);
   const focus = useStore((s) => s.ui.focusChannel);
   if (!data) return null;
@@ -463,13 +472,18 @@ export const ChannelsControls = memo(function ChannelsControls() {
     { key: 'computed', title: 'Computed sets' },
     { key: 'region', title: 'Regions' },
   ];
-  const metricOpts = [
-    { value: 'bandpower_change', label: 'Band-power change vs baseline (%)', disabled: !data.baseline },
+  const metricOpts: { value: typeof map.metric; label: string; hidden?: boolean }[] = [
+    { value: 'bandpower_change', label: 'Band-power change vs baseline (%)', hidden: !data.baseline },
     { value: 'separability_bandpower', label: 'Class separability of band power' },
     { value: 'separability_amplitude', label: 'Class separability of mean amplitude' },
+    { value: 'mean_amplitude', label: 'Mean amplitude (µV)' },
+    { value: 'mean_bandpower', label: 'Mean band power (µV²)' },
     { value: 'snr', label: 'Spectral SNR at a frequency (dB)' },
-  ].filter((o) => !o.disabled);
-  const forDisabled = map.metric === 'separability_bandpower' || map.metric === 'separability_amplitude';
+  ];
+  const offlineP300 = offline && data.paradigm === 'erp_p300';
+  const separability = map.metric === 'separability_bandpower' || map.metric === 'separability_amplitude';
+  const amplitude = map.metric === 'separability_amplitude' || map.metric === 'mean_amplitude';
+  const bandPower = map.metric === 'separability_bandpower' || map.metric === 'mean_bandpower';
   const setMap = (p: Partial<typeof map>): void => updateSettings({ map: { ...get().settings.map, ...p } });
   const lay = data.layout;
   return (
@@ -534,11 +548,13 @@ export const ChannelsControls = memo(function ChannelsControls() {
             <Select
               label="Map metric"
               value={map.metric}
-              options={metricOpts}
-              onChange={(v) => setMap({ metric: v as never })}
+              options={metricOpts.filter(({ value, hidden }) =>
+                !hidden && (!offlineP300 || value === 'separability_amplitude' || value === 'mean_amplitude')
+              )}
+              onChange={(v) => setMap({ metric: v as typeof map.metric })}
             />
           </Field>
-          {map.metric === 'bandpower_change' || map.metric === 'separability_bandpower' ? (
+          {map.metric === 'bandpower_change' || bandPower ? (
             <div className="row">
               <Field label="band low">
                 <NumberInput
@@ -569,23 +585,32 @@ export const ChannelsControls = memo(function ChannelsControls() {
           <Field
             label="Map for"
             hint={
-              forDisabled
-                ? 'Separability compares all classes at once, so "Map for" does not apply.'
+              separability
+                ? `Choose a class or difference to map ${amplitude ? 'mean amplitude' : 'mean band power'}.`
                 : undefined
             }
           >
             <Select
               label="Map for"
-              disabled={forDisabled}
-              value={String(map.mapClass)}
+              value={separability ? 'all' : String(map.mapClass)}
               options={[
+                ...(amplitude || bandPower ? [{ value: 'all', label: 'All classes (separability)' }] : []),
                 ...data.classNames.map((n, k) => ({ value: String(k), label: n })),
                 { value: 'diff', label: 'Difference (A minus B)' },
               ]}
-              onChange={(v) => setMap({ mapClass: v === 'diff' ? 'diff' : +v })}
+              onChange={(v) => {
+                if (v === 'all') {
+                  setMap({ metric: amplitude ? 'separability_amplitude' : 'separability_bandpower' });
+                  return;
+                }
+                setMap({
+                  metric: separability ? (amplitude ? 'mean_amplitude' : 'mean_bandpower') : map.metric,
+                  mapClass: v === 'diff' ? 'diff' : +v,
+                });
+              }}
             />
           </Field>
-          {map.mapClass === 'diff' && !forDisabled ? (
+          {map.mapClass === 'diff' && !separability ? (
             <div className="row">
               <Select
                 label="Class A"

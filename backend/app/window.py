@@ -97,11 +97,11 @@ def window_response(ds, settings: dict, body: dict) -> dict:
         not isinstance(classes, list)
         or any(type(k) is not int or not 0 <= k < n_classes for k in classes)
         or len(set(classes)) != len(classes)
-        or len(classes) < 2
+        or not classes
     ):
-        raise ValidationError("Choose at least two distinct dataset classes for separability.")
+        raise ValidationError("Choose at least one distinct dataset class for the probe.")
     selected = np.isin(ds.y, classes)
-    sep = separability(F[selected], ds.y[selected], int(settings.get("cvFolds", 5)))
+    sep = separability(F[selected], ds.y[selected], int(settings.get("cvFolds", 5))) if len(classes) >= 2 else None
     trials = display_trials(ds)
     return {
         "shape": [int(Xw.shape[0]), int(Xw.shape[1]), int(Xw.shape[2])],

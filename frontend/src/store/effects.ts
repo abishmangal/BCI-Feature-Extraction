@@ -71,12 +71,14 @@ export function fetchChannels(): void {
   void run(
     'channels',
     api.channels(body({ show_classes: s.settings.showClasses, map: s.settings.map }), D(120), K('channels')),
-    (r) =>
+    (r) => {
+      if (get().data !== s.data || get().settings.map !== s.settings.map) return;
       setResult('channels', {
         ...r,
         spark: decodeF32(r.sparklines),
         grid: r.map.grid ? decodeF32(r.map.grid) : null,
-      }),
+      });
+    },
   );
 }
 export function fetchBand(debounce = 60): void {

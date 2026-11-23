@@ -33,7 +33,7 @@ export type FamilyId =
   | 'autoencoder';
 
 export interface MapSettings {
-  metric: 'bandpower_change' | 'separability_bandpower' | 'separability_amplitude' | 'snr';
+  metric: 'bandpower_change' | 'separability_bandpower' | 'separability_amplitude' | 'mean_amplitude' | 'mean_bandpower' | 'snr';
   band: [number, number] | null;
   frequency: number | null;
   mapClass: number | 'diff';

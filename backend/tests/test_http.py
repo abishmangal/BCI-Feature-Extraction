@@ -100,6 +100,19 @@ def test_effect_maps_other_presets(server):
     c, _ = _post(server, "/channels", {"dataset_id": p3["id"], "settings": s, "map": {"metric": "separability_amplitude"}})
     v = dict(zip(p3["channels"], c["map"]["shownValues"], strict=True))
     assert max(v, key=v.get) in ("Pz", "Cz")
+    amplitudes = []
+    for cls in (0, 1):
+        result, _ = _post(server, "/channels", {
+            "dataset_id": p3["id"], "settings": s, "map": {"metric": "mean_amplitude", "mapClass": cls},
+        })
+        amplitudes.append(result["map"]["values"])
+        assert result["map"]["unit"] == "µV"
+    difference, _ = _post(server, "/channels", {
+        "dataset_id": p3["id"], "settings": s,
+        "map": {"metric": "mean_amplitude", "mapClass": "diff", "pair": {"a": 1, "b": 0}},
+    })
+    expected = [target - background for background, target in zip(*amplitudes, strict=True)]
+    assert difference["map"]["values"] == pytest.approx(expected)
     ss, _ = _post(server, "/dataset/synthetic", {"paradigm": "ssvep"})
     c, _ = _post(
         server,
@@ -108,6 +121,13 @@ def test_effect_maps_other_presets(server):
     )
     v = dict(zip(ss["channels"], c["map"]["shownValues"], strict=True))
     assert max(v, key=v.get) in ("Oz", "O1", "O2")
+
+
+def test_p300_probe_accepts_one_class(server):
+    ds, _ = _post(server, "/dataset/synthetic", {"paradigm": "erp_p300"})
+    single, _ = _post(server, "/window", {"dataset_id": ds["id"], "settings": {"probeClasses": [1]}})
+    assert single["probeClasses"] == [1]
+    assert single["separability"] is None
 
 
 def test_csv_upload_and_errors(server):
