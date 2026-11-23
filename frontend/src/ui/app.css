@@ -122,7 +122,7 @@ body,
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: var(--panel);
-  pointer-events: none;
+  pointer-events: auto;
 }
 .electrode-preview svg {
   display: block;
@@ -143,10 +143,24 @@ body,
   padding: 0;
   margin: 6px 0 0;
 }
-.electrode-preview-legend li {
+.electrode-preview-legend button {
   display: flex;
   align-items: center;
   gap: 4px;
+  padding: 3px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.electrode-preview-legend button[aria-pressed='false'] {
+  color: var(--grey);
+  text-decoration: line-through;
+}
+.electrode-preview-legend button[aria-pressed='false'] .sw {
+  opacity: 0.35;
 }
 .ov {
   position: absolute;

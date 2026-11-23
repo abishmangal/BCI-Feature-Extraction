@@ -97,11 +97,18 @@ function toggleChannel(name: string): void {
 }
 
 function ElectrodeOverlay() {
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const data = useStore((s) => s.data);
   const chans = useStore((s) => s.settings.channels);
   const values = useStore((s) => s.results.channels?.map.values ?? null);
   const unit = useStore((s) => s.results.channels?.map.unit ?? '');
   const order = useMemo(() => (data ? p3Geo(buildCtx()).order : []), [data]);
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+  const keepPreview = () => clearTimeout(closeTimer.current);
+  const closePreview = () => {
+    keepPreview();
+    closeTimer.current = setTimeout(() => updateUi({ focusChannel: null }), 300);
+  };
   if (!data) return null;
   const sel = new Set(chans.map((c) => c.toLowerCase()));
   return (
@@ -122,11 +129,26 @@ function ElectrodeOverlay() {
             className="ov-round"
             onActivate={() => toggleChannel(name)}
             onHover={(on) => {
-              updateUi({ focusChannel: on ? name : null });
+              if (on) {
+                keepPreview();
+                if (get().ui.focusChannel !== name) updateUi({ focusChannel: name });
+              } else {
+                closePreview();
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== 'ArrowDown') return;
+              const legendButton = e.currentTarget.closest('.overlay')
+                ?.querySelector<HTMLButtonElement>('.electrode-preview-legend button');
+              if (legendButton) {
+                e.preventDefault();
+                legendButton.focus();
+              }
             }}
           />
         );
       })}
+      <ElectrodePreview onEnter={keepPreview} onLeave={closePreview} />
     </>
   );
 }
@@ -137,8 +159,9 @@ const elPos =
     return { ...r, visible: r.w > 1 };
   };
 
-function ElectrodePreview() {
+function ElectrodePreview({ onEnter, onLeave }: { onEnter: () => void; onLeave: () => void }) {
   const preview = useRef<HTMLElement>(null);
+  const [hidden, setHidden] = useState<number[]>([]);
   const data = useStore((s) => s.data);
   const channel = useStore((s) => s.ui.focusChannel);
   const result = useStore((s) => s.results.channels);
@@ -192,7 +215,7 @@ function ElectrodePreview() {
     if (!spark || !shown.includes(k)) return [];
     const offset = (index * data.classNames.length + k) * 60;
     const points = spark.subarray(offset, offset + 60);
-    return [{ name, color: CLASS_HEX[k % CLASS_HEX.length], points }];
+    return [{ k, name, color: CLASS_HEX[k % CLASS_HEX.length], points }];
   });
 
   return (
@@ -200,6 +223,12 @@ function ElectrodePreview() {
       ref={preview}
       className="electrode-preview"
       aria-label={`${channel} waveform preview`}
+      onPointerEnter={onEnter}
+      onPointerLeave={onLeave}
+      onFocus={onEnter}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) onLeave();
+      }}
     >
       <strong>{channel}</strong>
       <div className="small">
@@ -213,9 +242,9 @@ function ElectrodePreview() {
         <>
           <svg viewBox="0 0 280 100" role="img" aria-label={`${channel} scaled EEG amplitude over time`}>
             <line x1="0" x2="280" y1="50" y2="50" stroke="var(--hairline)" />
-            {traces.map(({ name, color, points }) => (
+            {traces.filter(({ k }) => !hidden.includes(k)).map(({ k, color, points }) => (
               <polyline
-                key={name}
+                key={k}
                 points={Array.from(points, (value, i) => `${(280 * i) / 59},${50 - 94 * value}`).join(' ')}
                 fill="none"
                 stroke={color}
@@ -228,10 +257,18 @@ function ElectrodePreview() {
             <span>Window end</span>
           </div>
           <ul className="electrode-preview-legend small">
-            {traces.map(({ name, color }) => (
-              <li key={name}>
-                <span className="sw" style={{ background: color }} />
-                {name}
+            {traces.map(({ k, name, color }) => (
+              <li key={k}>
+                <button
+                  type="button"
+                  aria-pressed={!hidden.includes(k)}
+                  onClick={() => setHidden((current) =>
+                    current.includes(k) ? current.filter((id) => id !== k) : [...current, k],
+                  )}
+                >
+                  <span className="sw" style={{ background: color }} />
+                  {name}
+                </button>
               </li>
             ))}
           </ul>
@@ -794,7 +831,7 @@ export function StageHost() {
     }
   };
   const onDown = (e: React.PointerEvent): void => {
-    if ((e.target as HTMLElement).closest('.ov,.card-toolbar,.code')) return;
+    if ((e.target as HTMLElement).closest('.ov,.electrode-preview,.card-toolbar,.code')) return;
     const s = get();
     if (s.page !== 3 || !s.data) return;
     const o = hostOffset();
@@ -897,7 +934,6 @@ export function StageHost() {
         {hasData && page === 7 ? <MatrixOverlay /> : null}
         <RailOverlay />
       </div>
-      {hasData && page === 3 ? <ElectrodePreview /> : null}
       {hasData && page === 5 ? <CardToolbar /> : null}
       {hasData && page === 8 ? <CodePanel /> : null}
       {hasData && page === 7 ? <ComputingBanner /> : null}
