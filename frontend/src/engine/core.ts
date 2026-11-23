@@ -350,6 +350,28 @@ export class EngineCore {
   allSettled(): boolean {
     return this.springs.activeCount === 0 && this.cameraIdle();
   }
+
+  /** UI reveals can follow the visible transition without waiting for subpixel spring tails. */
+  visuallySettled(): boolean {
+    if (this.allSettled()) return true;
+    if (Math.abs(this.camera.scale - 1) > 0.001 || Math.abs(this.camera.tilt) > 0.05) return false;
+    const s = this.springs;
+    for (let i = 0; i < this.reg.n; i++) {
+      if (!s.active[i]) continue;
+      const final = (p: number) => s.finMask[i] & (1 << p) ? s.fin[p][i] : s.tgt[p][i];
+      const willShow = final(P.alpha) >= 0.01
+        && Math.abs(final(P.scaleX)) > 1e-3 && Math.abs(final(P.scaleY)) > 1e-3;
+      if (!willShow && !this.isVisible(i)) continue;
+      if (s.phase[i] !== 0) return false;
+      for (const p of [P.x, P.y, P.w, P.h]) {
+        if (Math.abs(s.pos[p][i] - final(p)) > 1 || Math.abs(s.vel[p][i]) > 12) return false;
+      }
+      for (const p of [P.scaleX, P.scaleY, P.rotation, P.alpha, P.reveal]) {
+        if (Math.abs(s.pos[p][i] - final(p)) > 0.015 || Math.abs(s.vel[p][i]) > 0.2) return false;
+      }
+    }
+    return true;
+  }
 }
 
 export type { Mode };

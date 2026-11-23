@@ -324,7 +324,7 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   useEffect(() => {
     if (!hasData || reduced || probeReady) return;
     const stop = engine.onFrame(() => {
-      if (!engine.core.allSettled()) return;
+      if (!engine.core.visuallySettled()) return;
       stop();
       setProbeReady(true);
     });
@@ -339,7 +339,7 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   const setW = (start: number, end: number): void =>
     updateSettings({ window: { start: Math.max(t0, start), end: Math.min(t0 + len, end) } });
   return (
-    <div className="window-workspace" data-probe-ready={reduced || probeReady} data-reduced-motion={reduced}>
+    <div className="window-workspace" data-probe-ready={reduced || probeReady}>
       <Section title="Time window settings">
         <div className="row">
           <Field label="start (s)">
