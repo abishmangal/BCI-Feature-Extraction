@@ -860,6 +860,12 @@ const DECOR: Record<string, DecorPaint> = {
   },
   '7:views': (v, ex) => paintViews(v, ex),
   '7:gauge': (v, ex) => {
+    const panel = gfx(v, 'metrics-panel');
+    panel.clear();
+    const sidebar = ex.sidebar as { x: number; y: number; width: number; height: number };
+    panel.roundRect(sidebar.x, sidebar.y, sidebar.width, sidebar.height, 8)
+      .fill({ color: COLORS.panel })
+      .stroke({ width: 1, color: COLORS.hairline });
     const g = gfx(v);
     g.clear();
     beginText(v);
@@ -1121,30 +1127,26 @@ function paintViews(v: ContainerView, ex: Ex): void {
   beginText(v);
   const x0 = num(ex.x0);
   const x1 = num(ex.x1);
-  const y0 = num(ex.y0);
+  const infoY = num(ex.infoY);
   const y1 = num(ex.y1);
   const my0 = num(ex.my0);
   // Tab strip (part of the stage; keyboard access through the accessibility overlay).
-  const tabs = (ex.tabs as { id: string; label: string }[]) ?? [];
-  let tx = x0;
+  const tabs = (ex.tabs as { id: string; label: string; x: number; y: number; w: number }[]) ?? [];
   tabs.forEach((t) => {
-    const w = t.label.length * 6.2 + 16;
     const active = t.id === ex.view;
     if (active)
-      g.moveTo(tx, y0 + 18)
-        .lineTo(tx + w - 6, y0 + 18)
+      g.moveTo(t.x, t.y + 18)
+        .lineTo(t.x + t.w, t.y + 18)
         .stroke({ width: 2, color: COLORS.accent });
     text(v, `tab${t.id}`, t.label, {
-      x: tx + 4,
-      y: y0 + 2,
+      x: t.x + 4,
+      y: t.y + 2,
       size: 10,
       color: active ? COLORS.accent : COLORS.grey,
     });
-    v.state[`tab:${t.id}`] = { x: tx, y: y0, w: w - 6, h: 20 };
-    tx += w;
   });
-  if (ex.tag) text(v, 'tag', str(ex.tag), { x: x1, y: y0 + 26, ax: 1, size: 9, color: COLORS.grey });
-  if (ex.pre) text(v, 'pre', 'pre-selection matrix', { x: x0, y: y0 + 26, size: 9, color: COLORS.grey });
+  if (ex.tag) text(v, 'tag', str(ex.tag), { x: x1, y: infoY, ax: 1, size: 9, color: COLORS.grey });
+  if (ex.pre) text(v, 'pre', 'pre-selection matrix', { x: x0, y: infoY, size: 9, color: COLORS.grey });
   if (ex.traceLabel) {
     text(v, 'trace', str(ex.traceLabel), { ...GRAPH_LABEL, x: x0, y: y1 + 10 });
   }
@@ -1824,14 +1826,14 @@ export function createPainters(): Painters {
         const x0 = num(ex.x0);
         const x1 = num(ex.x1);
         const y0 = num(ex.y0);
-        const bh = Math.max(1, Math.min(16, (num(ex.y1) - y0 - 26) / Math.max(1, bars.size) - 3));
+        const bh = num(ex.barHeight);
         const labelStride = Math.max(1, Math.ceil(14 / (bh + 3)));
         text(view, 't', 'Feature race · separability (0–1)', { ...GRAPH_LABEL, x: x0, y: y0 });
         let moving = false;
         let k = 0;
         for (const [name, s] of bars) {
           moving = s.step(dtMs) || moving;
-          const y = y0 + 24 + k * (bh + 3);
+          const y = y0 + num(ex.headerHeight) + k * (bh + 3);
           const w = (x1 - x0 - 120) * Math.max(0, Math.min(1, s.x));
           g.rect(x0 + 120, y, w, bh).fill({
             color: name === ex.xFeature ? COLORS.accent : COLORS.teal,

@@ -4,6 +4,7 @@ import p3 from '../../public/fallback/erp_p300.json';
 import ss from '../../public/fallback/ssvep.json';
 import { layoutFor, helpersFor, tablesFor } from '../../src/layouts';
 import { p4Geo } from '../../src/layouts/page4';
+import { p7Geo, raceBarHeight, RACE_HEADER_HEIGHT } from '../../src/layouts/page7';
 import { REG, ticks, tickStep, windowSnap, minWindow, type LayoutCtx } from '../../src/layouts/common';
 import { decodeDataset, defaultSettings, emptyPreset, selectChannelGroup, type Data, type Results } from '../../src/store/store';
 import { decodeF32, encodeF32 } from '../../src/api/f32';
@@ -181,6 +182,18 @@ it('aligns the frequency controls with their plots and leaves a gap between the 
   expect(controlRects.example.height).toBeCloseTo(wave.y1 - wave.y0);
   expect(controlRects.example.height).toBeCloseTo(141.792);
   expect(wave.y0).toBeGreaterThan(y1);
+});
+
+it('keeps matrix tabs and the feature race inside their respective regions', () => {
+  const ctx = ctxFor(null, {}, 7);
+  const wide = p7Geo(ctx);
+  expect(wide.px0).toBeGreaterThan(wide.vx1);
+  expect(wide.raceTop + RACE_HEADER_HEIGHT + 14 * (raceBarHeight(wide, 14) + 3))
+    .toBeLessThanOrEqual(wide.raceBottom);
+  const narrow = p7Geo({ ...ctx, stageSize: { width: 420, height: 1160, stageHeight: 1104 } });
+  expect(narrow.metricsTop).toBeGreaterThan(narrow.strip.y1);
+  expect(narrow.tabs.every((tab) => tab.x + tab.w <= narrow.vx1)).toBe(true);
+  expect(narrow.tabBottom).toBeGreaterThan(narrow.vy0 + 20);
 });
 
 describe('time axis rules (section 3.1)', () => {

@@ -1,8 +1,8 @@
 import { Profiler, useEffect } from 'react';
 import * as RTooltip from '@radix-ui/react-tooltip';
-import { TopBar } from './Shell';
+import { PageHeader, ShapeBadge, TopBar } from './Shell';
 import { StageHost } from './StageHost';
-import { ChannelsControls, ControlsPanel, TransformControls } from './Panels';
+import { ChannelsControls, ControlsPanel, MatrixControls, TransformControls } from './Panels';
 import { get, navigate, store, useStore } from '../store/store';
 import { startApp } from '../store/effects';
 
@@ -47,6 +47,7 @@ export const commits = { n: 0 };
 export function App() {
   useRouting();
   const workspace = useStore((s) => {
+    if (s.page === 7) return 'matrix';
     if (!s.data) return null;
     if (s.page === 3) return 'channels';
     if (s.page === 6) return 'transform';
@@ -61,6 +62,15 @@ export function App() {
         <div className="app">
           <TopBar />
           <main className={`main${workspace ? ` ${workspace}-workspace` : ''}`}>
+            {workspace === 'matrix' ? (
+              <div className="matrix-top">
+                <div className="matrix-intro">
+                  <PageHeader />
+                  <ShapeBadge />
+                </div>
+                <MatrixControls />
+              </div>
+            ) : null}
             <StageHost />
             {workspace === 'channels' ? <ChannelsControls /> : workspace === 'transform' ? <TransformControls /> : <ControlsPanel />}
           </main>

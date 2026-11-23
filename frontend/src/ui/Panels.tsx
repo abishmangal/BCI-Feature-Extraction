@@ -1473,7 +1473,7 @@ export const TransformControls = memo(function TransformControls() {
 });
 
 // ------------------------------------------------------------------------------------- page 7
-const Page7 = memo(function Page7() {
+export const MatrixControls = memo(function MatrixControls() {
   const s = useStore((st) => st.settings);
   const ev = useStore((st) => st.results.evaluate);
   const ss = s.selectionSettings;
@@ -1481,7 +1481,7 @@ const Page7 = memo(function Page7() {
     updateSettings({ selectionSettings: { ...get().settings.selectionSettings, ...p } });
   const names = ev?.names ?? [];
   return (
-    <>
+    <div className="workspace-tools matrix-tools" aria-label="Feature matrix controls" role="group">
       <Section title="Classifier">
         <Field label="Classifier">
           <Select
@@ -1510,6 +1510,7 @@ const Page7 = memo(function Page7() {
             {(ev.chance * 100).toFixed(0)}%)
           </p>
         ) : null}
+        <Status ep="evaluate" />
       </Section>
       <Section title="Leakage">
         <Switch
@@ -1641,8 +1642,7 @@ const Page7 = memo(function Page7() {
           </p>
         ) : null}
       </details>
-      <Status ep="evaluate" />
-    </>
+    </div>
   );
 });
 
@@ -1750,7 +1750,7 @@ const Page8 = memo(function Page8() {
   );
 });
 
-const PANELS = [Page1, null, null, null, Page5, null, Page7, Page8];
+const PANELS = [Page1, null, null, null, Page5, null, null, Page8];
 
 export const ControlsPanel = memo(function ControlsPanel() {
   const page = useStore((s) => s.page);

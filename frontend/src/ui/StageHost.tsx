@@ -11,7 +11,7 @@ import { p2Geo } from '../layouts/page2';
 import { p3Geo, channelXY } from '../layouts/page3';
 import { p4Geo } from '../layouts/page4';
 import { p5Geo, maxScroll, TITLES } from '../layouts/page5';
-import { p7Geo, VIEW_TABS, matrixInfo, RACE_TOP } from '../layouts/page7';
+import { p7Geo, matrixInfo, raceBarHeight, RACE_HEADER_HEIGHT } from '../layouts/page7';
 import { p8Geo } from '../layouts/page8';
 import { FAMILY_IDS } from '../engine/registry';
 import { CLASS_HEX } from '../engine/colors';
@@ -612,6 +612,18 @@ function MatrixOverlay() {
   const pre = useStore((s) => s.settings.showPreSelection);
   const xf = useStore((s) => s.settings.xFeature);
   const shift = useRef<string | null>(null);
+  const [, refreshGeometry] = useState(0);
+  useEffect(() => {
+    let width = engine.stage?.width;
+    let height = engine.stage?.height;
+    return engine.onFrame(() => {
+      const stage = engine.stage;
+      if (!stage || (stage.width === width && stage.height === height)) return;
+      width = stage.width;
+      height = stage.height;
+      refreshGeometry((n) => n + 1);
+    });
+  }, []);
   if (!ev) return null;
   const c = buildCtx();
   const g = p7Geo(c);
@@ -619,29 +631,19 @@ function MatrixOverlay() {
   const cols = view === 'matrix' ? names.slice(g.offset, g.offset + g.visibleCols) : [];
   void offset;
   void pre;
-  let tx = g.vx0;
-  const tabs = VIEW_TABS.map((t) => {
-    const w = t.label.length * 6.2 + 16;
-    const r = { x: tx, y: g.vy0, w: w - 6, h: 20 };
-    tx += w;
-    return { ...t, r };
-  });
   const rank = ev.ranking.auc
     .map((v, i) => ({ i, v }))
     .sort((a, b) => b.v - a.v || a.i - b.i)
     .slice(0, 14);
-  const bh = Math.min(
-    16,
-    (c.stageSize.stageHeight - 170 - (132 + RACE_TOP) - 24) / Math.max(1, rank.length) - 3,
-  );
+  const bh = raceBarHeight(g, rank.length);
   return (
     <>
-      {tabs.map((t) => (
+      {g.tabs.map((t) => (
         <OverlayButton
           key={t.id}
           id={`tab:${t.id}`}
           testid={`view-${t.id}`}
-          pos={() => ({ ...t.r, visible: true })}
+          pos={() => ({ x: t.x, y: t.y, w: t.w, h: t.h, visible: true })}
           label={`${t.label} view`}
           pressed={view === t.id}
           onActivate={() => updateSettings({ view: t.id as never })}
@@ -676,7 +678,7 @@ function MatrixOverlay() {
           id={`bar:${o.i}`}
           pos={() => ({
             x: g.px0,
-            y: 132 + RACE_TOP + 20 + k * (bh + 3),
+            y: g.raceTop + RACE_HEADER_HEIGHT + k * (bh + 3),
             w: g.px1 - g.px0,
             h: bh,
             visible: true,
@@ -925,8 +927,8 @@ export function StageHost() {
     >
       <canvas ref={canvas} className="stage-canvas" data-testid="canvas" />
       <RailNav />
-      <PageHeader />
-      <ShapeBadge />
+      {page !== 7 ? <PageHeader /> : null}
+      {page !== 7 ? <ShapeBadge /> : null}
       <div className="overlay" ref={overlay} key={`ov${dataVersion}:${nChannels}`}>
         {hasData && page === 2 ? <WindowHandles /> : null}
         {hasData && page === 3 ? <ElectrodeOverlay /> : null}

@@ -1,7 +1,7 @@
 // Page 7: Feature matrix. val pieces are the matrix cells; scatter views pull each row into one dot.
 import type { Layout } from '../engine/types';
 import { COLORS, mix } from '../engine/colors';
-import { type LayoutCtx, H, PAD, TOP, W, classColor, finish, setDecor } from './common';
+import { type LayoutCtx, H, PAD, W, classColor, finish, setDecor } from './common';
 
 export interface P7Geo {
   vx0: number;
@@ -16,6 +16,12 @@ export interface P7Geo {
   offset: number;
   px0: number;
   px1: number;
+  metricsTop: number;
+  metricsBottom: number;
+  raceTop: number;
+  raceBottom: number;
+  tabs: { id: string; label: string; x: number; y: number; w: number; h: number }[];
+  tabBottom: number;
   strip: { x0: number; x1: number; y0: number; y1: number };
 }
 
@@ -31,12 +37,27 @@ export function matrixInfo(c: LayoutCtx): { values: Float32Array | null; names: 
 export function p7Geo(c: LayoutCtx): P7Geo {
   const w = W(c);
   const h = H(c);
+  const wide = w >= 760;
   const vx0 = PAD + 18;
-  const vx1 = Math.round(w * 0.6);
-  const vy0 = TOP + 64; // room for the COMPUTING... banner under the page header
-  const vy1 = h - 64;
-  // tabs (20 px) / family brackets / rotated column names / matrix
-  const my0 = vy0 + 136;
+  const vx1 = wide ? Math.round(w * 0.62) : w - PAD;
+  const metricsTop = wide ? 12 : Math.max(460, h - 610);
+  const metricsBottom = h - 10;
+  const vy0 = 40;
+  const vy1 = wide ? h - 64 : metricsTop - 62;
+  let tabX = vx0;
+  let tabY = vy0;
+  const tabs = VIEW_TABS.map((tab) => {
+    const width = Math.min(tab.label.length * 6.2 + 16, vx1 - vx0);
+    if (tabX !== vx0 && tabX + width > vx1) {
+      tabX = vx0;
+      tabY += 22;
+    }
+    const rect = { ...tab, x: tabX, y: tabY, w: width - 6, h: 20 };
+    tabX += width;
+    return rect;
+  });
+  const tabBottom = tabY + 20;
+  const my0 = tabBottom + 116;
   const rows = Math.max(1, c.slots.val.trials.length);
   const nFeat = Math.max(1, c.slots.val.nFeatures);
   const vw = vx1 - vx0;
@@ -55,9 +76,15 @@ export function p7Geo(c: LayoutCtx): P7Geo {
     cellH: (vy1 - my0) / rows,
     visibleCols,
     offset,
-    px0: vx1 + 28,
-    px1: w - PAD,
-    strip: { x0: vx0, x1: vx1, y0: h - 54, y1: h - 8 },
+    px0: wide ? vx1 + 38 : PAD + 18,
+    px1: w - PAD - 6,
+    metricsTop,
+    metricsBottom,
+    raceTop: metricsTop + 214,
+    raceBottom: metricsBottom - 133,
+    tabs,
+    tabBottom,
+    strip: { x0: vx0, x1: vx1, y0: vy1 + 10, y1: vy1 + 56 },
   };
 }
 
@@ -250,19 +277,20 @@ export function layout(c: LayoutCtx): Layout {
         names: visNames,
         offset: g.offset,
         total: mi.nFeat,
-        infoY: g.vy0 + 26,
+        infoY: g.tabBottom + 6,
       },
     });
     setDecor(m, 7, 'brackets', {
       alpha: pull ? 0 : 1,
-      extra: { x0: g.vx0, cellW: g.cellW, y: g.vy0 + 48, groups: groupRuns(fams) },
+      extra: { x0: g.vx0, cellW: g.cellW, y: g.tabBottom + 28, groups: groupRuns(fams) },
     });
     const pw = g.px1 - g.px0;
     setDecor(m, 7, 'gauge', {
       extra: {
         x: g.px0 + pw / 2,
-        y: TOP + 152,
-        r: Math.min(100, pw / 2 - 10),
+        y: g.metricsTop + 126,
+        r: Math.min(88, pw / 2 - 10),
+        sidebar: { x: g.px0 - 16, y: g.metricsTop, width: pw + 32, height: g.metricsBottom - g.metricsTop },
         value: ev.accuracy.mean,
         std: ev.accuracy.std,
         chance: ev.chance,
@@ -278,8 +306,9 @@ export function layout(c: LayoutCtx): Layout {
       extra: {
         x0: g.px0,
         x1: g.px1,
-        y0: TOP + RACE_TOP,
-        y1: H(c) - 170,
+        y0: g.raceTop,
+        barHeight: raceBarHeight(g, Math.min(14, rank.length)),
+        headerHeight: RACE_HEADER_HEIGHT,
         bars: rank.slice(0, 14).map((o) => ({ name: ev.names[o.i], v: o.v })),
         xFeature: c.settings.xFeature,
       },
@@ -288,8 +317,8 @@ export function layout(c: LayoutCtx): Layout {
       extra: {
         x0: g.px0,
         x1: g.px1,
-        y0: H(c) - 160,
-        y1: H(c) - 30,
+        y0: g.raceBottom + 10,
+        y1: g.metricsBottom,
         correct: ev.correct.mean,
         leaky: ev.leaky.mean,
         gap: ev.gapPoints,
@@ -306,7 +335,8 @@ export function layout(c: LayoutCtx): Layout {
         my0: g.my0,
         traceLabel: hr === null ? null : `Filtered EEG · Trial ${hr + 1} · ${d.classNames[d.labels[hr]]}`,
         view,
-        tabs: VIEW_TABS,
+        infoY: g.tabBottom + 6,
+        tabs: g.tabs,
         scatter:
           pull && sp
             ? {
@@ -343,8 +373,11 @@ export function layout(c: LayoutCtx): Layout {
   return finish(m, c);
 }
 
-/** Race panel offset below TOP (shared with the accessibility overlay). */
-export const RACE_TOP = 232;
+export const RACE_HEADER_HEIGHT = 24;
+
+export function raceBarHeight(g: P7Geo, count: number): number {
+  return Math.max(1, Math.min(16, (g.raceBottom - g.raceTop - RACE_HEADER_HEIGHT) / Math.max(1, count) - 3));
+}
 
 export const VIEW_TABS: { id: string; label: string }[] = [
   { id: 'matrix', label: 'Matrix' },

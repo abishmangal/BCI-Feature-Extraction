@@ -923,6 +923,77 @@ a:focus-visible {
   width: 100%;
   overflow-wrap: anywhere;
 }
+.matrix-workspace {
+  flex-direction: column;
+  overflow: auto;
+}
+.matrix-top {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 20px 6px 32px;
+}
+.matrix-intro .page-header,
+.matrix-intro .badge-wrap {
+  position: static;
+  max-width: none;
+}
+.matrix-intro .caption {
+  max-width: 24ch;
+  line-height: 1.4;
+}
+.matrix-intro .badge-wrap {
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.matrix-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  padding: 0;
+}
+.matrix-tools > .psec {
+  min-width: 0;
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+}
+.matrix-tools h3,
+.matrix-tools summary {
+  font-size: 17px;
+}
+.matrix-tools .field {
+  margin-block: 4px;
+}
+.matrix-tools .select-trigger {
+  width: 100%;
+}
+.matrix-workspace > .stage-host {
+  min-height: 640px;
+}
+.matrix-workspace .computing {
+  top: 6px;
+  font-size: 20px;
+}
+@media (max-width: 1050px) {
+  .matrix-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 759px) {
+  .matrix-workspace > .stage-host {
+    min-height: 1160px;
+  }
+  .matrix-top {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 16px;
+  }
+}
+@media (max-width: 480px) {
+  .matrix-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 @media (max-width: 899px) {
   .transform-workspace {
     grid-template:
