@@ -32,7 +32,7 @@ export function p4Geo(c: LayoutCtx): P4Geo {
   const x0 = PAD + 56;
   const x1 = w - PAD - 24;
   const y0 = TOP + 26;
-  const y1 = TOP + (h - TOP) * 0.6;
+  const y1 = TOP + (h - TOP) * 0.51;
   const fmax = freqMax(c.data?.sfreq ?? 250);
   const nBins = Math.min(POOL.sine, Math.floor((fmax - 1) / 0.5) + 1);
   const fx = (f: number): number => x0 + ((f - 1) / (fmax - 1)) * (x1 - x0);
@@ -48,7 +48,7 @@ export function p4Geo(c: LayoutCtx): P4Geo {
     binF: (k) => 1 + 0.5 * k,
     prism: { x: w / 2, y: py, entryX: w / 2 - 22, exitX: w / 2 + 22 },
     // the waveform panel starts below the frequency-axis label
-    wave: { x0, x1, y0: Math.max(h * 0.7, y1 + 44), y1: h - 18 },
+    wave: { x0, x1, y0: y1 + 48, y1: h - 18 },
   };
 }
 

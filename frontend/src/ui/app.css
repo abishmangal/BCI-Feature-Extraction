@@ -821,7 +821,7 @@ a:focus-visible {
 .channels-workspace > .stage-host {
   grid-area: stage;
 }
-.channel-tools {
+.workspace-tools {
   display: flex;
   flex-direction: column;
   justify-content: safe center;
@@ -837,57 +837,75 @@ a:focus-visible {
   grid-area: selection;
   padding-left: 0;
 }
-.channel-tools > .psec {
+.workspace-tools > .psec {
   padding: 16px 18px;
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: var(--panel);
 }
-.channel-tools h3 {
+.workspace-tools h3 {
   margin: 0 0 8px;
   font-size: 22px;
 }
-.channel-tools p {
+.workspace-tools p {
   margin: 6px 0;
 }
-.channel-tools .field {
+.workspace-tools .field {
   margin: 8px 0;
   min-width: 0;
 }
-.channel-tools .small,
-.channel-tools .field-hint {
+.workspace-tools .small,
+.workspace-tools .field-hint {
   font-size: 13px;
 }
-.channel-tools .field-label,
-.channel-tools .switch-row,
-.channel-tools .num,
-.channel-tools .select-trigger,
-.channel-tools .chipbtn,
-.channel-tools .toggle-item {
+.workspace-tools .field-label,
+.workspace-tools .switch-row,
+.workspace-tools .num,
+.workspace-tools .select-trigger,
+.workspace-tools .chipbtn,
+.workspace-tools .toggle-item {
   font-size: 14px;
 }
-.channel-tools .num,
-.channel-tools .select-trigger,
-.channel-tools .chipbtn,
-.channel-tools .toggle-item {
+.workspace-tools .num,
+.workspace-tools .select-trigger,
+.workspace-tools .chipbtn,
+.workspace-tools .toggle-item {
   min-height: 32px;
 }
-.channel-tools input[type='range'] {
+.workspace-tools input[type='range'] {
   accent-color: var(--teal);
 }
-.channel-tools .select-trigger,
-.channel-tools .chipbtn {
+.workspace-tools .select-trigger,
+.workspace-tools .chipbtn {
   min-width: 0;
   max-width: 100%;
   white-space: normal;
   text-align: left;
 }
-.channel-tools .chipbtn {
+.workspace-tools .chipbtn {
   padding: 4px 10px;
 }
-.channel-tools .preset-row + .preset-row {
+.workspace-tools .preset-row + .preset-row {
   padding-top: 6px;
   border-top: 1px solid var(--hairline);
+}
+.band-workspace {
+  display: grid;
+  grid-template:
+    "controls stage" minmax(760px, 1fr)
+    / clamp(290px, 26vw, 410px) minmax(0, 1fr);
+  overflow: auto;
+}
+.band-workspace > .stage-host {
+  grid-area: stage;
+}
+.band-tools {
+  grid-area: controls;
+  justify-content: flex-start;
+  padding: 132px 0 74px 16px;
+}
+.band-tools > .psec:last-child {
+  margin-top: auto;
 }
 @media (max-width: 1100px) {
   .channels-workspace {
@@ -896,7 +914,7 @@ a:focus-visible {
       "map selection" auto
       / repeat(2, minmax(0, 1fr));
   }
-  .channel-tools {
+  .channels-workspace .workspace-tools {
     justify-content: flex-start;
     padding: 8px 16px 16px;
   }
@@ -907,6 +925,17 @@ a:focus-visible {
     padding-left: 6px;
   }
 }
+@media (max-width: 759px) {
+  .band-workspace {
+    grid-template:
+      "stage" 600px
+      "controls" auto
+      / minmax(0, 1fr);
+  }
+  .band-tools {
+    padding: 8px 16px 16px;
+  }
+}
 @media (max-width: 580px) {
   .channels-workspace {
     grid-template:
@@ -915,7 +944,7 @@ a:focus-visible {
       "map" auto
       / minmax(0, 1fr);
   }
-  .channel-tools {
+  .channels-workspace .workspace-tools {
     padding-inline: 16px;
   }
 }

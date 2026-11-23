@@ -936,7 +936,7 @@ export function StageHost() {
         <RailOverlay />
       </div>
       {page === 2 ? <TimeWindowControls /> : null}
-      {page === 3 && !hasData ? <div className="window-empty">Load data on page 1 first.</div> : null}
+      {(page === 3 || page === 4) && !hasData ? <div className="window-empty">Load data on page 1 first.</div> : null}
       {hasData && page === 5 ? <CardToolbar /> : null}
       {hasData && page === 8 ? <CodePanel /> : null}
       {hasData && page === 7 ? <ComputingBanner /> : null}

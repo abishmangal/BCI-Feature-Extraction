@@ -456,7 +456,7 @@ export const ChannelsControls = memo(function ChannelsControls() {
   const lay = data.layout;
   return (
     <>
-      <aside className="channel-tools channel-tools-right" aria-label="Electrode selection">
+      <aside className="workspace-tools channel-tools-right" aria-label="Electrode selection">
         <Section title="Selection">
           <p className="readout" data-testid="counter">
             {chans.length} of {data.channels.length} channels selected
@@ -499,7 +499,7 @@ export const ChannelsControls = memo(function ChannelsControls() {
           </div>
         </Section>
       </aside>
-      <aside className="channel-tools channel-tools-left" aria-label="Map and waveform controls">
+      <aside className="workspace-tools channel-tools-left" aria-label="Map and waveform controls">
         <Section title="Effect map">
           <Switch checked={map.visible} onChange={(v) => setMap({ visible: v })} label="Show effect map" />
           <Field label={`Opacity ${map.opacity}`}>
@@ -600,12 +600,12 @@ export const ChannelsControls = memo(function ChannelsControls() {
 });
 
 // ------------------------------------------------------------------------------------- page 4
-const Page4 = memo(function Page4() {
+export const BandControls = memo(function BandControls() {
   const data = useStore((s) => s.data);
   const band = useStore((s) => s.settings.band);
   const s = useStore((st) => st.settings);
   const res = useStore((st) => st.results.band);
-  if (!data) return <Msg>Load data on page 1 first.</Msg>;
+  if (!data) return null;
   const fm = freqMax(data.sfreq);
   const setB = (p: Partial<typeof band>): void => {
     const b = { ...get().settings.band, ...p };
@@ -622,7 +622,7 @@ const Page4 = memo(function Page4() {
   const all = [...data.preset.bandPresets];
   for (const e of extra) if (!all.some((p) => p.low === e.low && p.high === e.high)) all.push(e);
   return (
-    <>
+    <aside className="workspace-tools band-tools" aria-label="Frequency band controls">
       <Section title="Band-pass">
         <div className="row">
           <Field label="low (Hz)">
@@ -710,7 +710,7 @@ const Page4 = memo(function Page4() {
         </div>
         <Status ep="band" />
       </Section>
-    </>
+    </aside>
   );
 });
 
@@ -1722,7 +1722,7 @@ const Page8 = memo(function Page8() {
   );
 });
 
-const PANELS = [Page1, null, null, Page4, Page5, Page6, Page7, Page8];
+const PANELS = [Page1, null, null, null, Page5, Page6, Page7, Page8];
 
 export const ControlsPanel = memo(function ControlsPanel() {
   const page = useStore((s) => s.page);
