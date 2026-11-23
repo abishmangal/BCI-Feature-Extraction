@@ -810,6 +810,103 @@ a:focus-visible {
 .probe-class[aria-pressed='false'] .sw {
   opacity: 0.35;
 }
+
+.channels-workspace {
+  display: grid;
+  grid-template:
+    "map stage selection" minmax(620px, 1fr)
+    / clamp(260px, 23vw, 360px) minmax(0, 1fr) clamp(260px, 23vw, 360px);
+  overflow: auto;
+}
+.channels-workspace > .stage-host {
+  grid-area: stage;
+}
+.channel-tools {
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+}
+.channel-tools-left {
+  grid-area: map;
+  padding-right: 0;
+}
+.channel-tools-right {
+  grid-area: selection;
+  padding-left: 0;
+}
+.channel-tools > .psec {
+  padding: 14px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.channel-tools h3 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+.channel-tools p {
+  margin: 6px 0;
+}
+.channel-tools .field {
+  margin: 8px 0;
+  min-width: 0;
+}
+.channel-tools .num,
+.channel-tools .select-trigger,
+.channel-tools .chipbtn,
+.channel-tools .toggle-item {
+  min-height: 32px;
+}
+.channel-tools input[type='range'] {
+  accent-color: var(--teal);
+}
+.channel-tools .select-trigger,
+.channel-tools .chipbtn {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+}
+.channel-tools .chipbtn {
+  padding: 4px 10px;
+}
+.channel-tools .preset-row + .preset-row {
+  padding-top: 6px;
+  border-top: 1px solid var(--hairline);
+}
+@media (max-width: 1100px) {
+  .channels-workspace {
+    grid-template:
+      "stage stage" minmax(600px, 1fr)
+      "map selection" auto
+      / repeat(2, minmax(0, 1fr));
+  }
+  .channel-tools {
+    justify-content: flex-start;
+    padding: 8px 16px 16px;
+  }
+  .channel-tools-left {
+    padding-right: 6px;
+  }
+  .channel-tools-right {
+    padding-left: 6px;
+  }
+}
+@media (max-width: 580px) {
+  .channels-workspace {
+    grid-template:
+      "stage" 600px
+      "selection" auto
+      "map" auto
+      / minmax(0, 1fr);
+  }
+  .channel-tools {
+    padding-inline: 16px;
+  }
+}
 .probe-blocks {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

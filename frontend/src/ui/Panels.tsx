@@ -413,14 +413,13 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
 });
 
 // ------------------------------------------------------------------------------------- page 3
-const Page3 = memo(function Page3() {
+export const ChannelsControls = memo(function ChannelsControls() {
   const data = useStore((s) => s.data);
   const chans = useStore((s) => s.settings.channels);
   const map = useStore((s) => s.settings.map);
   const err = useStore((s) => s.results.channels?.map.error ?? null);
   const focus = useStore((s) => s.ui.focusChannel);
-  if (!data) return <Msg>Load data on page 1 first.</Msg>;
-  const K = data.classNames.length;
+  if (!data) return null;
   const cur = new Set(chans);
   const same = (list: string[]): boolean => list.length === chans.length && list.every((c) => cur.has(c));
   const apply = (list: string[], e: React.MouseEvent): void => {
@@ -458,142 +457,145 @@ const Page3 = memo(function Page3() {
   const lay = data.layout;
   return (
     <>
-      <Section title="Selection">
-        <p className="readout" data-testid="counter">
-          {chans.length} of {data.channels.length} channels selected
-        </p>
-        <p className="mono small" data-testid="layout-tag">
-          {lay.label}
-          {lay.n_in_tray ? `, ${lay.n_on_head} on head, ${lay.n_in_tray} in tray` : ''}
-        </p>
-        {chans.length === 0 ? (
-          <Msg kind="error">At least one channel must stay selected. Downstream pages are blocked.</Msg>
-        ) : null}
-        <p className="small">{focus ? `focused: ${focus}` : ' '}</p>
-      </Section>
-      <Section title="Electrode presets">
-        <div role="group" aria-label="Electrode presets">
-          {rows.map((r) => {
-            const items = data.electrodePresets.filter((p) => p.row === r.key);
-            if (!items.length) return null;
-            return (
-              <div key={r.key} className="preset-row">
-                <span className="small">{r.title}</span>
-                <div className="presets">
-                  {items.map((p) => (
-                    <button
-                      key={p.id}
-                      data-testid={`preset-${p.id}`}
-                      className={`chipbtn ${p.channels.length && same(p.channels) ? 'on' : ''}`}
-                      aria-pressed={p.channels.length > 0 && same(p.channels)}
-                      title={`${p.channels.join(', ')} (${p.present} sites)`}
-                      onClick={(e) => apply(p.channels, e)}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+      <aside className="channel-tools channel-tools-right" aria-label="Electrode selection">
+        <Section title="Selection">
+          <p className="readout" data-testid="counter">
+            {chans.length} of {data.channels.length} channels selected
+          </p>
+          <p className="mono small" data-testid="layout-tag">
+            {lay.label}
+            {lay.n_in_tray ? `, ${lay.n_on_head} on head, ${lay.n_in_tray} in tray` : ''}
+          </p>
+          {chans.length === 0 ? (
+            <Msg kind="error">At least one channel must stay selected. Downstream pages are blocked.</Msg>
+          ) : null}
+          {focus ? <p className="small">Focused electrode {focus}</p> : null}
+        </Section>
+        <Section title="Electrode presets">
+          <div role="group" aria-label="Electrode presets">
+            {rows.map((r) => {
+              const items = data.electrodePresets.filter((p) => p.row === r.key);
+              if (!items.length) return null;
+              return (
+                <div key={r.key} className="preset-row">
+                  <span className="small">{r.title}</span>
+                  <div className="presets">
+                    {items.map((p) => (
+                      <button
+                        key={p.id}
+                        data-testid={`preset-${p.id}`}
+                        className={`chipbtn ${p.channels.length && same(p.channels) ? 'on' : ''}`}
+                        aria-pressed={p.channels.length > 0 && same(p.channels)}
+                        title={`${p.channels.join(', ')} (${p.present} sites)`}
+                        onClick={(e) => apply(p.channels, e)}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-          <p className="small">Shift-click adds, Alt-click removes.</p>
-        </div>
-      </Section>
-      <Section title="Effect map">
-        <Switch checked={map.visible} onChange={(v) => setMap({ visible: v })} label="Show effect map" />
-        <Field label={`Opacity ${map.opacity}`}>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={map.opacity}
-            onChange={(e) => setMap({ opacity: +e.target.value })}
-            aria-label="Effect map opacity"
-          />
-        </Field>
-        <Field label="Map metric">
-          <Select
-            label="Map metric"
-            value={map.metric}
-            options={metricOpts}
-            onChange={(v) => setMap({ metric: v as never })}
-          />
-        </Field>
-        {map.metric === 'bandpower_change' || map.metric === 'separability_bandpower' ? (
-          <div className="row">
-            <Field label="band low">
-              <NumberInput
-                label="Map band low"
-                value={map.band?.[0] ?? get().settings.band.low}
-                onCommit={(v) => setMap({ band: [v, map.band?.[1] ?? get().settings.band.high] })}
-              />
-            </Field>
-            <Field label="band high">
-              <NumberInput
-                label="Map band high"
-                value={map.band?.[1] ?? get().settings.band.high}
-                onCommit={(v) => setMap({ band: [map.band?.[0] ?? get().settings.band.low, v] })}
-              />
-            </Field>
+              );
+            })}
+            <p className="small">Shift-click adds, Alt-click removes.</p>
           </div>
-        ) : null}
-        {map.metric === 'snr' ? (
-          <Field label="Target frequency (Hz, empty = class stimulus frequency)">
+        </Section>
+      </aside>
+      <aside className="channel-tools channel-tools-left" aria-label="Map and waveform controls">
+        <Section title="Effect map">
+          <Switch checked={map.visible} onChange={(v) => setMap({ visible: v })} label="Show effect map" />
+          <Field label={`Opacity ${map.opacity}`}>
             <input
-              className="num"
-              defaultValue={map.frequency ?? ''}
-              aria-label="Target frequency"
-              onBlur={(e) => setMap({ frequency: e.target.value ? +e.target.value : null })}
+              type="range"
+              min={0}
+              max={100}
+              value={map.opacity}
+              onChange={(e) => setMap({ opacity: +e.target.value })}
+              aria-label="Effect map opacity"
             />
           </Field>
-        ) : null}
-        <Field
-          label="Map for"
-          hint={
-            forDisabled
-              ? 'Separability compares all classes at once, so "Map for" does not apply.'
-              : undefined
-          }
-        >
-          <Select
+          <Field label="Map metric">
+            <Select
+              label="Map metric"
+              value={map.metric}
+              options={metricOpts}
+              onChange={(v) => setMap({ metric: v as never })}
+            />
+          </Field>
+          {map.metric === 'bandpower_change' || map.metric === 'separability_bandpower' ? (
+            <div className="row">
+              <Field label="band low">
+                <NumberInput
+                  label="Map band low"
+                  value={map.band?.[0] ?? get().settings.band.low}
+                  onCommit={(v) => setMap({ band: [v, map.band?.[1] ?? get().settings.band.high] })}
+                />
+              </Field>
+              <Field label="band high">
+                <NumberInput
+                  label="Map band high"
+                  value={map.band?.[1] ?? get().settings.band.high}
+                  onCommit={(v) => setMap({ band: [map.band?.[0] ?? get().settings.band.low, v] })}
+                />
+              </Field>
+            </div>
+          ) : null}
+          {map.metric === 'snr' ? (
+            <Field label="Target frequency (Hz, empty = class stimulus frequency)">
+              <input
+                className="num"
+                defaultValue={map.frequency ?? ''}
+                aria-label="Target frequency"
+                onBlur={(e) => setMap({ frequency: e.target.value ? +e.target.value : null })}
+              />
+            </Field>
+          ) : null}
+          <Field
             label="Map for"
-            disabled={forDisabled}
-            value={String(map.mapClass)}
-            options={[
-              ...data.classNames.map((n, k) => ({ value: String(k), label: n })),
-              { value: 'diff', label: 'Difference (A minus B)' },
-            ]}
-            onChange={(v) => setMap({ mapClass: v === 'diff' ? 'diff' : +v })}
-          />
-        </Field>
-        {map.mapClass === 'diff' && !forDisabled ? (
-          <div className="row">
+            hint={
+              forDisabled
+                ? 'Separability compares all classes at once, so "Map for" does not apply.'
+                : undefined
+            }
+          >
             <Select
-              label="Class A"
-              value={String(map.pair.a)}
-              options={data.classNames.map((n, k) => ({ value: String(k), label: `A: ${n}` }))}
-              onChange={(v) => setMap({ pair: { ...map.pair, a: +v } })}
+              label="Map for"
+              disabled={forDisabled}
+              value={String(map.mapClass)}
+              options={[
+                ...data.classNames.map((n, k) => ({ value: String(k), label: n })),
+                { value: 'diff', label: 'Difference (A minus B)' },
+              ]}
+              onChange={(v) => setMap({ mapClass: v === 'diff' ? 'diff' : +v })}
             />
-            <Select
-              label="Class B"
-              value={String(map.pair.b)}
-              options={data.classNames.map((n, k) => ({ value: String(k), label: `B: ${n}` }))}
-              onChange={(v) => setMap({ pair: { ...map.pair, b: +v } })}
-            />
-          </div>
-        ) : null}
-        {err ? <Msg kind="warn">{err}</Msg> : null}
-        <Status ep="channels" />
-      </Section>
-      <Section title="Sparklines">
-        <ClassChips />
-        {chans.length > 16 ? (
-          <p className="small">
-            More than 16 electrodes are included: the sparkline is shown for the hovered or focused electrode.
-          </p>
-        ) : null}
-      </Section>
-      {void K}
+          </Field>
+          {map.mapClass === 'diff' && !forDisabled ? (
+            <div className="row">
+              <Select
+                label="Class A"
+                value={String(map.pair.a)}
+                options={data.classNames.map((n, k) => ({ value: String(k), label: `A: ${n}` }))}
+                onChange={(v) => setMap({ pair: { ...map.pair, a: +v } })}
+              />
+              <Select
+                label="Class B"
+                value={String(map.pair.b)}
+                options={data.classNames.map((n, k) => ({ value: String(k), label: `B: ${n}` }))}
+                onChange={(v) => setMap({ pair: { ...map.pair, b: +v } })}
+              />
+            </div>
+          ) : null}
+          {err ? <Msg kind="warn">{err}</Msg> : null}
+          <Status ep="channels" />
+        </Section>
+        <Section title="Sparklines">
+          <ClassChips />
+          {chans.length > 16 ? (
+            <p className="small">
+              More than 16 electrodes are included: the sparkline is shown for the hovered or focused electrode.
+            </p>
+          ) : null}
+        </Section>
+      </aside>
     </>
   );
 });
@@ -1721,7 +1723,7 @@ const Page8 = memo(function Page8() {
   );
 });
 
-const PANELS = [Page1, null, Page3, Page4, Page5, Page6, Page7, Page8];
+const PANELS = [Page1, null, null, Page4, Page5, Page6, Page7, Page8];
 
 export const ControlsPanel = memo(function ControlsPanel() {
   const page = useStore((s) => s.page);
