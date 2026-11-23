@@ -1,0 +1,34 @@
+/* Design tokens (section 4). The single source for colours, type and spacing in the DOM UI. */
+:root {
+  --cream: #f6f1e7;
+  --panel: #fbf8f1;
+  --ink: #1f1b16;
+  --grey: #7a7266; /* secondary text, 4.6:1 on cream */
+  --hairline: #d9d1c0;
+  --shadow: 0 6px 24px rgba(31, 27, 22, 0.08);
+  --accent: #2b4c8c;
+  --teal: #2a9d8f;
+  --teal-dark: #1f7a6f;
+  --teal-light: #e3f3f0;
+  --amber: #e9a23b;
+  --taupe: #cbbfa6;
+  --scalp: #fffdf7;
+  --excluded: #cfc8b8;
+  --class-0: #c4623d;
+  --class-1: #1f6f78;
+  --class-2: #b58b2a;
+  --class-3: #7a4e7e;
+  --class-4: #6b7a3a;
+  --class-5: #a8586b;
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --panel-w: 320px;
+  --rail-h: 56px;
+  --radius: 6px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+}

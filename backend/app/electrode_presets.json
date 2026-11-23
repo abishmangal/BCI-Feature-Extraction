@@ -1,0 +1,16 @@
+{
+  "version": "1",
+  "aliases": { "T3": "T7", "T4": "T8", "T5": "P7", "T6": "P8" },
+  "sets": [
+    {
+      "id": "standard_1020_19",
+      "label": "Standard 10-20 (19 sites)",
+      "channels": ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T7", "C3", "Cz", "C4", "T8", "P7", "P3", "Pz", "P4", "P8", "O1", "O2"]
+    },
+    {
+      "id": "midline",
+      "label": "Midline",
+      "channels": ["Fpz", "Fz", "FCz", "Cz", "CPz", "Pz", "POz", "Oz"]
+    }
+  ]
+}

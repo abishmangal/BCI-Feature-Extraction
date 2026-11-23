@@ -1,0 +1,147 @@
+{
+  "version": "1",
+  "presets": [
+    {
+      "id": "motor_imagery",
+      "name": "Motor imagery",
+      "synthetic": "make_motor_imagery",
+      "classNames": ["left hand", "right hand"],
+      "eventLabel": "cue",
+      "sfreq": 250,
+      "epoch": { "tmin": -0.5, "n_samples": 750 },
+      "channels": ["Fz", "FC3", "FC1", "FCz", "FC2", "FC4", "C5", "C3", "C1", "Cz", "C2", "C4", "C6", "CP3", "CP1", "CPz", "CP2", "CP4", "P1", "Pz", "P2", "POz"],
+      "baseline": { "start": -0.5, "end": 0.0 },
+      "zone": { "start": 0.5, "end": 2.0, "label": "typical imagery zone" },
+      "defaultWindow": { "start": 0.0, "end": 2.0 },
+      "defaultBand": { "low": 8, "high": 30, "order": 4 },
+      "windowPresets": [
+        { "label": "Full epoch", "full": true },
+        { "label": "Imagery 0 to 2 s (default)", "start": 0.0, "end": 2.0 },
+        { "label": "Late 1 to 2.5 s", "start": 1.0, "end": 2.5 },
+        { "label": "Before cue -0.5 to 0 s (control)", "start": -0.5, "end": 0.0 }
+      ],
+      "bandPresets": [
+        { "label": "Mu only 8-12", "low": 8, "high": 12 },
+        { "label": "Beta only 13-30", "low": 13, "high": 30 },
+        { "label": "Mu + beta 8-30 (default)", "low": 8, "high": 30 },
+        { "label": "Wide 4-40", "low": 4, "high": 40 },
+        { "label": "Delta/theta 1-7 (control)", "low": 1, "high": 7 }
+      ],
+      "channelPresets": [
+        { "label": "Motor strip (C3, Cz, C4)", "channels": ["C3", "Cz", "C4"], "default": true },
+        { "label": "Central ring (C5, C3, C1, Cz, C2, C4, C6, CP3, CPz, CP4, FC3, FCz, FC4)", "channels": ["C5", "C3", "C1", "Cz", "C2", "C4", "C6", "CP3", "CPz", "CP4", "FC3", "FCz", "FC4"] }
+      ],
+      "probe": {
+        "x": { "channel": "C3", "type": "log_band_power", "band": [8, 12] },
+        "y": { "channel": "C4", "type": "log_band_power", "band": [8, 12] }
+      },
+      "mapMetric": { "metric": "bandpower_change", "band": [8, 12], "mapClass": 0 },
+      "keyBands": [
+        { "name": "mu", "low": 8, "high": 12 },
+        { "name": "beta", "low": 13, "high": 30 }
+      ],
+      "stimulusFrequencies": null,
+      "defaultFeature": { "family": "band_power", "settings": { "bands": [{ "name": "mu", "low": 8, "high": 12 }, { "name": "beta", "low": 13, "high": 30 }] } },
+      "recommendedFamilies": ["csp", "band_power", "tf_regions", "asymmetry", "covariance"],
+      "waveletRange": [8, 30],
+      "hints": {
+        "page2": "Motor imagery effects usually start about 0.5 s after the cue.",
+        "page3": "Motor imagery lives over the motor strip (C3, Cz, C4).",
+        "page4": "Mu (8-12 Hz) and beta (13-30 Hz) power drop during imagery."
+      },
+      "facts": "Motor imagery causes event-related desynchronization (ERD, a drop in mu 8-12 Hz and beta 13-30 Hz power) over the sensorimotor cortex contralateral to the imagined hand, so left-hand imagery is strongest at C4 and right-hand imagery at C3."
+    },
+    {
+      "id": "erp_p300",
+      "name": "P300 / ERP",
+      "synthetic": "make_erp_p300",
+      "classNames": ["non-target", "target"],
+      "eventLabel": "stimulus",
+      "sfreq": 250,
+      "epoch": { "tmin": -0.2, "n_samples": 250 },
+      "channels": ["Fz", "Cz", "Pz", "Oz", "P3", "P4", "PO7", "PO8"],
+      "baseline": { "start": -0.2, "end": 0.0 },
+      "zone": { "start": 0.25, "end": 0.6, "label": "typical P300 zone" },
+      "defaultWindow": { "start": 0.1, "end": 0.6 },
+      "defaultBand": { "low": 1, "high": 12, "order": 4 },
+      "windowPresets": [
+        { "label": "Full epoch", "full": true },
+        { "label": "P300 window 0.25 to 0.6 s", "start": 0.25, "end": 0.6 },
+        { "label": "Early 0 to 0.25 s (control)", "start": 0.0, "end": 0.25 },
+        { "label": "Baseline -0.2 to 0 s (control)", "start": -0.2, "end": 0.0 }
+      ],
+      "bandPresets": [
+        { "label": "ERP band 1-12 (default)", "low": 1, "high": 12 },
+        { "label": "Delta/theta 1-7", "low": 1, "high": 7 },
+        { "label": "Alpha 8-13 (control)", "low": 8, "high": 13 },
+        { "label": "Broad 1-30", "low": 1, "high": 30 }
+      ],
+      "channelPresets": [
+        { "label": "Midline (Fz, Cz, Pz)", "channels": ["Fz", "Cz", "Pz"] },
+        { "label": "Parietal-occipital (Pz, P3, P4, PO7, PO8, Oz)", "channels": ["Pz", "P3", "P4", "PO7", "PO8", "Oz"] }
+      ],
+      "probe": {
+        "x": { "channel": "Cz", "type": "mean_amplitude", "band": null },
+        "y": { "channel": "Pz", "type": "mean_amplitude", "band": null }
+      },
+      "mapMetric": { "metric": "separability_amplitude", "band": null, "mapClass": 0 },
+      "keyBands": [],
+      "stimulusFrequencies": null,
+      "defaultFeature": { "family": "window_means", "settings": { "binMs": 50, "baseline": true } },
+      "recommendedFamilies": ["window_means", "time_stats", "covariance"],
+      "waveletRange": [2, 12],
+      "hints": {
+        "page2": "The P300 response peaks about 0.3 to 0.5 s after the stimulus.",
+        "page3": "Midline central and parietal sites (Cz, Pz) carry the P300.",
+        "page4": "Most ERP energy is below about 12 Hz."
+      },
+      "facts": "Rare target stimuli evoke a positive deflection about 300 to 500 ms after onset (P300), largest over midline central and parietal sites (Cz, Pz)."
+    },
+    {
+      "id": "ssvep",
+      "name": "SSVEP",
+      "synthetic": "make_ssvep",
+      "classNames": ["8 Hz", "10 Hz", "12 Hz", "15 Hz"],
+      "eventLabel": "stimulus onset",
+      "sfreq": 250,
+      "epoch": { "tmin": 0.0, "n_samples": 500 },
+      "channels": ["O1", "Oz", "O2", "POz", "PO3", "PO4", "PO7", "PO8"],
+      "baseline": null,
+      "zone": { "start": 0.5, "end": 2.0, "label": "steady-state zone" },
+      "defaultWindow": { "start": 0.5, "end": 2.0 },
+      "defaultBand": { "low": 6, "high": 40, "order": 4 },
+      "windowPresets": [
+        { "label": "Full epoch 0 to 2 s", "full": true },
+        { "label": "Steady state 0.5 to 2 s (default)", "start": 0.5, "end": 2.0 },
+        { "label": "Early 0 to 0.5 s (control)", "start": 0.0, "end": 0.5 },
+        { "label": "Late 1 to 2 s", "start": 1.0, "end": 2.0 }
+      ],
+      "bandPresets": [
+        { "label": "Stimulus range 6-40 (default)", "low": 6, "high": 40 },
+        { "label": "Low 6-20", "low": 6, "high": 20 },
+        { "label": "Alpha 8-13 (control)", "low": 8, "high": 13 },
+        { "label": "Wide 4-40", "low": 4, "high": 40 }
+      ],
+      "channelPresets": [
+        { "label": "Occipital (O1, Oz, O2)", "channels": ["O1", "Oz", "O2"], "default": true },
+        { "label": "Parieto-occipital (POz, PO3, PO4, PO7, PO8)", "channels": ["POz", "PO3", "PO4", "PO7", "PO8"] }
+      ],
+      "probe": {
+        "x": { "channel": "Oz", "type": "log_band_power", "band": [7.5, 8.5] },
+        "y": { "channel": "Oz", "type": "log_band_power", "band": [11.5, 12.5] }
+      },
+      "mapMetric": { "metric": "snr", "band": null, "mapClass": 0 },
+      "keyBands": [],
+      "stimulusFrequencies": [8, 10, 12, 15],
+      "defaultFeature": { "family": "band_power", "settings": { "bands": "stimulus" } },
+      "recommendedFamilies": ["band_power", "spectral_features", "covariance"],
+      "waveletRange": [6, 30],
+      "hints": {
+        "page2": "The response builds up over the first few hundred milliseconds.",
+        "page3": "Occipital sites (O1, Oz, O2) carry the response.",
+        "page4": "Look for peaks at the stimulus frequency and its second harmonic."
+      },
+      "facts": "A flickering visual stimulus at frequency f evokes a response at f and its harmonics over occipital sites."
+    }
+  ]
+}
