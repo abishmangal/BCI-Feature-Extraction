@@ -2,6 +2,7 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import {
   get,
+  selectChannelGroup,
   set,
   updateSettings,
   updateUi,
@@ -421,12 +422,10 @@ export const ChannelsControls = memo(function ChannelsControls() {
   const focus = useStore((s) => s.ui.focusChannel);
   if (!data) return null;
   const cur = new Set(chans);
-  const same = (list: string[]): boolean => list.length === chans.length && list.every((c) => cur.has(c));
-  const apply = (list: string[], e: React.MouseEvent): void => {
-    let next: string[];
-    if (e.shiftKey) next = data.channels.filter((c) => cur.has(c) || list.includes(c));
-    else if (e.altKey) next = data.channels.filter((c) => cur.has(c) && !list.includes(c));
-    else next = data.channels.filter((c) => list.includes(c));
+  const selected = (list: string[]): boolean => list.length > 0 && list.every((c) => cur.has(c));
+  const apply = (id: string, list: string[], e: React.MouseEvent): void => {
+    const action = e.shiftKey ? 'add' : e.altKey ? 'remove' : id === 'all' ? 'add' : 'toggle';
+    const next = id === 'clear' ? [] : selectChannelGroup(data.channels, get().settings.channels, list, action);
     if (!next.length) {
       set({
         status: {
@@ -484,10 +483,10 @@ export const ChannelsControls = memo(function ChannelsControls() {
                       <button
                         key={p.id}
                         data-testid={`preset-${p.id}`}
-                        className={`chipbtn ${p.channels.length && same(p.channels) ? 'on' : ''}`}
-                        aria-pressed={p.channels.length > 0 && same(p.channels)}
+                        className={`chipbtn ${selected(p.channels) ? 'on' : ''}`}
+                        aria-pressed={p.id === 'clear' ? undefined : selected(p.channels)}
                         title={`${p.channels.join(', ')} (${p.present} sites)`}
-                        onClick={(e) => apply(p.channels, e)}
+                        onClick={(e) => apply(p.id, p.channels, e)}
                       >
                         {p.label}
                       </button>
@@ -496,7 +495,7 @@ export const ChannelsControls = memo(function ChannelsControls() {
                 </div>
               );
             })}
-            <p className="small">Shift-click adds, Alt-click removes.</p>
+            <p className="small">Click a group to add its electrodes. Click a highlighted group to remove them, or use Clear to start over.</p>
           </div>
         </Section>
       </aside>

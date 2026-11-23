@@ -1,7 +1,7 @@
 // Stage host: the one canvas (owned by the engine singleton), the accessibility overlay and DOM overlays.
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { engine, matrixRowAt, poseOf, stackTrialAt, buildCtx, chipsArrived } from '../engine/wiring';
-import { get, navigate, set, updateSettings, updateUi, useStore } from '../store/store';
+import { get, navigate, selectChannelGroup, set, updateSettings, updateUi, useStore } from '../store/store';
 import { loadCsv, loadNpz } from '../store/effects';
 import { hideTip, registerTooltip, showTip } from './tooltip';
 import { PageHeader, RailNav, ShapeBadge } from './Shell';
@@ -842,7 +842,7 @@ export function StageHost() {
     const m = marq.current!;
     const el = e.currentTarget as HTMLElement;
     el.setPointerCapture(e.pointerId);
-    const mode = e.shiftKey ? 'add' : e.altKey ? 'remove' : 'replace';
+    const mode = e.altKey && !e.shiftKey ? 'remove' : 'add';
     const move = (ev: PointerEvent): void => {
       const x1 = ev.clientX - o.x;
       const y1 = ev.clientY - o.y;
@@ -871,12 +871,8 @@ export function StageHost() {
           p.y <= Math.max(y0, y1)
         );
       });
-      const cur = new Set(c.settings.channels);
-      let next: Set<string>;
-      if (mode === 'add') next = new Set([...cur, ...inside]);
-      else if (mode === 'remove') next = new Set([...cur].filter((x) => !inside.includes(x)));
-      else next = new Set(inside);
-      const list = d.channels.filter((x) => next.has(x));
+      if (!inside.length) return;
+      const list = selectChannelGroup(d.channels, c.settings.channels, inside, mode);
       if (!list.length) {
         set({
           status: {

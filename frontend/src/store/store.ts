@@ -410,6 +410,21 @@ const PAGE_OF: Partial<Record<keyof Settings, number>> = {
   exportMode: 8,
 };
 
+export function selectChannelGroup(
+  channelOrder: string[],
+  current: string[],
+  group: string[],
+  action: 'add' | 'remove' | 'toggle' = 'toggle',
+): string[] {
+  const selected = new Set(current);
+  const remove = action === 'remove' || (action === 'toggle' && group.every((channel) => selected.has(channel)));
+  for (const channel of group) {
+    if (remove) selected.delete(channel);
+    else selected.add(channel);
+  }
+  return channelOrder.filter((channel) => selected.has(channel));
+}
+
 export function updateSettings(patch: Partial<Settings>): void {
   const s = get();
   const keys = Object.keys(patch) as (keyof Settings)[];

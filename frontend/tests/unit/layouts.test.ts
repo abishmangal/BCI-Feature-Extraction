@@ -4,7 +4,7 @@ import p3 from '../../public/fallback/erp_p300.json';
 import ss from '../../public/fallback/ssvep.json';
 import { layoutFor, helpersFor, tablesFor } from '../../src/layouts';
 import { REG, ticks, tickStep, windowSnap, minWindow, type LayoutCtx } from '../../src/layouts/common';
-import { decodeDataset, defaultSettings, emptyPreset, type Data, type Results } from '../../src/store/store';
+import { decodeDataset, defaultSettings, emptyPreset, selectChannelGroup, type Data, type Results } from '../../src/store/store';
 import { decodeF32, encodeF32 } from '../../src/api/f32';
 import { classOrderRank, stratifiedSubset } from '../../src/engine/slots';
 import type { DatasetResponse } from '../../src/api/types';
@@ -12,6 +12,19 @@ import { EngineCore } from '../../src/engine/core';
 import { P } from '../../src/engine/springs';
 
 const BUNDLES: Record<string, unknown> = { motor_imagery: mi, erp_p300: p3, ssvep: ss };
+
+it('adds electrode groups cumulatively and removes the group clicked again', () => {
+  const order = ['C3', 'Cz', 'C4', 'P1', 'Pz', 'P2'];
+  const central = ['C3', 'Cz', 'C4'];
+  const parietal = ['P2', 'Pz', 'P1'];
+  const withCentral = selectChannelGroup(order, ['Cz'], central);
+  expect(withCentral).toEqual(central);
+  const both = selectChannelGroup(order, withCentral, parietal);
+  expect(both).toEqual(order);
+  expect(selectChannelGroup(order, both, central)).toEqual(['P1', 'Pz', 'P2']);
+  expect(selectChannelGroup(order, both, central, 'add')).toEqual(order);
+});
+
 function bundle(pid: string): Record<string, unknown> {
   return structuredClone(BUNDLES[pid]) as Record<string, unknown>;
 }
