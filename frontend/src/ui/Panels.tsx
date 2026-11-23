@@ -31,6 +31,7 @@ import { NAMED } from '../layouts/page4';
 import { epochSpan, freqMax } from '../layouts/common';
 
 const NONE: never[] = [];
+const PROBE_CHART = engine.core.reg.index.get('decor:2:minimap')!;
 const NO_SETTINGS: Record<string, unknown> = {};
 const DEFAULT_MONTAGES = ['standard_1005'];
 
@@ -324,7 +325,7 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   useEffect(() => {
     if (!hasData || reduced || probeReady) return;
     const stop = engine.onFrame(() => {
-      if (!engine.core.visuallySettled()) return;
+      if (!engine.core.isVisible(PROBE_CHART)) return;
       stop();
       setProbeReady(true);
     });
@@ -339,7 +340,7 @@ export const TimeWindowControls = memo(function TimeWindowControls() {
   const setW = (start: number, end: number): void =>
     updateSettings({ window: { start: Math.max(t0, start), end: Math.min(t0 + len, end) } });
   return (
-    <div className="window-workspace" data-probe-ready={reduced || probeReady}>
+    <div className="window-workspace" data-probe-ready={reduced || probeReady} data-reduced-motion={reduced}>
       <Section title="Time window settings">
         <div className="row">
           <Field label="start (s)">

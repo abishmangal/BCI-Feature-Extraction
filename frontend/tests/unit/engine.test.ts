@@ -27,18 +27,16 @@ const run = (s: SpringSystem, t0: number, ms: number): number => {
 };
 
 describe('springs', () => {
-  it('reports that a visible transition has settled before the spring tail ends', () => {
+  it('marks the probe chart visible at the start of its reveal', () => {
     const core = new EngineCore();
     const s = core.springs;
-    const i = core.reg.index.get('dot:0')!;
-    const target = vals({ [P.x]: 100, [P.alpha]: 1, [P.scaleX]: 1, [P.scaleY]: 1 });
-    s.retarget(i, target.v, target.m, 0, 300, FLAVORS.soft);
-    expect(core.visuallySettled()).toBe(false);
-    run(s, 0, 550);
-    expect(core.visuallySettled()).toBe(false);
-    let now = 550;
-    while (now < 2000 && !core.visuallySettled()) now = run(s, now, 1000 / 120);
-    expect(core.visuallySettled()).toBe(true);
+    const i = core.reg.index.get('decor:2:minimap')!;
+    const target = vals({ [P.alpha]: 1, [P.scaleX]: 1, [P.scaleY]: 1 });
+    s.retarget(i, target.v, target.m, 0, 800, FLAVORS.reveal);
+    const now = run(s, 0, 790);
+    expect(core.isVisible(i)).toBe(false);
+    run(s, now, 60);
+    expect(core.isVisible(i)).toBe(true);
     expect(core.allSettled()).toBe(false);
   });
 
