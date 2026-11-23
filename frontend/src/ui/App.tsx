@@ -2,7 +2,7 @@ import { Profiler, useEffect } from 'react';
 import * as RTooltip from '@radix-ui/react-tooltip';
 import { TopBar } from './Shell';
 import { StageHost } from './StageHost';
-import { ChannelsControls, ControlsPanel } from './Panels';
+import { ChannelsControls, ControlsPanel, TransformControls } from './Panels';
 import { get, navigate, store, useStore } from '../store/store';
 import { startApp } from '../store/effects';
 
@@ -46,7 +46,12 @@ export const commits = { n: 0 };
 
 export function App() {
   useRouting();
-  const showChannelCards = useStore((s) => s.page === 3 && !!s.data);
+  const workspace = useStore((s) => {
+    if (!s.data) return null;
+    if (s.page === 3) return 'channels';
+    if (s.page === 6) return 'transform';
+    return null;
+  });
   useEffect(() => {
     void startApp();
   }, []);
@@ -55,9 +60,9 @@ export function App() {
       <RTooltip.Provider delayDuration={200}>
         <div className="app">
           <TopBar />
-          <main className={`main${showChannelCards ? ' channels-workspace' : ''}`}>
+          <main className={`main${workspace ? ` ${workspace}-workspace` : ''}`}>
             <StageHost />
-            {showChannelCards ? <ChannelsControls /> : <ControlsPanel />}
+            {workspace === 'channels' ? <ChannelsControls /> : workspace === 'transform' ? <TransformControls /> : <ControlsPanel />}
           </main>
         </div>
       </RTooltip.Provider>

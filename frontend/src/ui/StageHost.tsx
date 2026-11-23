@@ -937,7 +937,9 @@ export function StageHost() {
       </div>
       {page === 2 ? <TimeWindowControls /> : null}
       {hasData && page === 4 ? <BandControls /> : null}
-      {(page === 3 || page === 4) && !hasData ? <div className="window-empty">Load data on page 1 first.</div> : null}
+      {(page === 3 || page === 4 || page === 6) && !hasData ? (
+        <div className="window-empty">Load data on page 1 first.</div>
+      ) : null}
       {hasData && page === 5 ? <CardToolbar /> : null}
       {hasData && page === 8 ? <CodePanel /> : null}
       {hasData && page === 7 ? <ComputingBanner /> : null}

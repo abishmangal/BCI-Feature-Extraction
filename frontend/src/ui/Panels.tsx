@@ -1302,11 +1302,6 @@ const Page5 = memo(function Page5() {
   );
 });
 
-/** During the 5 -> 6 transition the sidebar stays empty; the basket floats out onto the stage. */
-const BasketFlip = memo(function BasketFlip() {
-  return <Basket flipping />;
-});
-
 /** Use the same reveal spring for sidebar and in-page controls. */
 function usePanelFade<T extends HTMLElement>(visible = true, from = 0) {
   const ref = useRef<T>(null);
@@ -1389,15 +1384,17 @@ export const CardPane = memo(function CardPane({ f }: { f: FamilyId }) {
 });
 
 // ------------------------------------------------------------------------------------- page 6
-const Page6 = memo(function Page6() {
+export const TransformControls = memo(function TransformControls() {
   const s = useStore((st) => st.settings);
+  const hold = useStore((st) => st.ui.panelHold);
   const tr = useStore((st) => st.results.transform);
   const fr = useStore((st) => st.results.features);
   const names = useStore((st) => st.data?.classNames ?? NONE);
   const featNames = fr?.selected.families.flatMap((f) => f.names) ?? [];
   const uniq = Array.from(new Set(featNames));
+  if (hold) return <Basket flipping />;
   return (
-    <>
+    <aside className="workspace-tools transform-tools" aria-label="Transform and normalize controls">
       <Section title="Feature to inspect">
         <Select
           label="Feature to inspect"
@@ -1471,7 +1468,7 @@ const Page6 = memo(function Page6() {
         </Section>
       ) : null}
       <Status ep="transform" />
-    </>
+    </aside>
   );
 });
 
@@ -1753,13 +1750,12 @@ const Page8 = memo(function Page8() {
   );
 });
 
-const PANELS = [Page1, null, null, null, Page5, Page6, Page7, Page8];
+const PANELS = [Page1, null, null, null, Page5, null, Page7, Page8];
 
 export const ControlsPanel = memo(function ControlsPanel() {
   const page = useStore((s) => s.page);
   const open = useStore((s) => s.ui.panelOpen);
-  const hold = useStore((s) => s.ui.panelHold);
-  const P = hold ? BasketFlip : PANELS[page - 1];
+  const P = PANELS[page - 1];
   if (!P) return null;
   return (
     <aside className={`panel ${open ? '' : 'closed'}`} aria-label="Controls">
@@ -1773,13 +1769,9 @@ export const ControlsPanel = memo(function ControlsPanel() {
         {open ? 'Hide controls ›' : '‹'}
       </button>
       <div className="panel-body">
-        {hold ? (
+        <FadeIn key={page}>
           <P />
-        ) : (
-          <FadeIn key={page}>
-            <P />
-          </FadeIn>
-        )}
+        </FadeIn>
       </div>
       {void defaultSettings}
     </aside>
