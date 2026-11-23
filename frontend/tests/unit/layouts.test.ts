@@ -3,6 +3,7 @@ import mi from '../../public/fallback/motor_imagery.json';
 import p3 from '../../public/fallback/erp_p300.json';
 import ss from '../../public/fallback/ssvep.json';
 import { layoutFor, helpersFor, tablesFor } from '../../src/layouts';
+import { p4Geo } from '../../src/layouts/page4';
 import { REG, ticks, tickStep, windowSnap, minWindow, type LayoutCtx } from '../../src/layouts/common';
 import { decodeDataset, defaultSettings, emptyPreset, selectChannelGroup, type Data, type Results } from '../../src/store/store';
 import { decodeF32, encodeF32 } from '../../src/api/f32';
@@ -170,6 +171,16 @@ describe('layouts return a target for every piece and decor id', () => {
     expect(shown).toBe(8);
     expect(m.get('electrode:1')!.extra!.chip).toBe(true);
   });
+});
+
+it('aligns the frequency controls with their plots and leaves a gap between the rows', () => {
+  const { y0, y1, wave, controlRects } = p4Geo(ctxFor(null, {}, 4));
+  expect(controlRects.spectrum.y).toBe(y0);
+  expect(controlRects.spectrum.height).toBe(y1 - y0);
+  expect(controlRects.example.y).toBe(wave.y0);
+  expect(controlRects.example.height).toBeCloseTo(wave.y1 - wave.y0);
+  expect(controlRects.example.height).toBeCloseTo(141.792);
+  expect(wave.y0).toBeGreaterThan(y1);
 });
 
 describe('time axis rules (section 3.1)', () => {

@@ -28,8 +28,8 @@ import { engine } from '../engine/wiring';
 import { TITLES } from '../layouts/page5';
 import { Basket } from './Basket';
 import { Scalar } from '../engine/scalar';
-import { NAMED } from '../layouts/page4';
-import { epochSpan, freqMax } from '../layouts/common';
+import { NAMED, p4Geo } from '../layouts/page4';
+import { epochSpan, freqMax, RAIL_H } from '../layouts/common';
 
 const NONE: never[] = [];
 const PROBE_CHART = engine.core.reg.index.get('decor:2:minimap')!;
@@ -605,6 +605,32 @@ export const BandControls = memo(function BandControls() {
   const band = useStore((s) => s.settings.band);
   const s = useStore((st) => st.settings);
   const res = useStore((st) => st.results.band);
+  const deck = useRef<HTMLDivElement>(null);
+  const spectrum = useRef<HTMLElement>(null);
+  const example = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = deck.current;
+    const upper = spectrum.current;
+    const lower = example.current;
+    if (!el || !upper || !lower) return;
+    const align = () => {
+      const width = el.clientWidth;
+      const height = el.clientHeight;
+      const { controlRects } = p4Geo({ data, stageSize: { width, height, stageHeight: height - RAIL_H } });
+      for (const [panel, rect] of [[upper, controlRects.spectrum], [lower, controlRects.example]] as const) {
+        Object.assign(panel.style, {
+          left: `${rect.x}px`,
+          top: `${rect.y}px`,
+          width: `${rect.width}px`,
+          height: rect.height === undefined ? '' : `${rect.height}px`,
+        });
+      }
+    };
+    align();
+    const observer = new ResizeObserver(align);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [data]);
   if (!data) return null;
   const fm = freqMax(data.sfreq);
   const setB = (p: Partial<typeof band>): void => {
@@ -622,8 +648,8 @@ export const BandControls = memo(function BandControls() {
   const all = [...data.preset.bandPresets];
   for (const e of extra) if (!all.some((p) => p.low === e.low && p.high === e.high)) all.push(e);
   return (
-    <div className="band-control-deck">
-      <aside className="workspace-tools band-tools-upper" aria-label="Spectrum controls">
+    <div className="band-control-deck" ref={deck}>
+      <aside className="workspace-tools band-tools-upper" ref={spectrum} aria-label="Spectrum controls">
         <Section title="Band-pass">
           <div className="row">
             <Field label="low (Hz)">
@@ -684,7 +710,7 @@ export const BandControls = memo(function BandControls() {
           <p className="small">{NAMED.map((b) => `${b.name} ${b.low}-${b.high}`).join(', ')}</p>
         </Section>
       </aside>
-      <aside className="workspace-tools band-tools-example" aria-label="Example waveform selection">
+      <aside className="workspace-tools band-tools-example" ref={example} aria-label="Example waveform selection">
         <Section title="Example waveform">
           <div className="band-example-fields">
             <Field label="Trial">

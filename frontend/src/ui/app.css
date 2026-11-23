@@ -897,37 +897,34 @@ a:focus-visible {
 }
 .band-control-deck {
   position: absolute;
-  inset: 158px 0 74px;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) max(110px, calc(21.5% - 16px));
-  row-gap: 56px;
+  inset: 0;
   pointer-events: none;
 }
 .band-control-deck .workspace-tools {
+  position: absolute;
   padding: 0;
+  gap: 8px;
   justify-content: flex-start;
   pointer-events: auto;
 }
-.band-tools-upper {
-  justify-self: end;
-  width: min(450px, 36%);
-  margin-right: 16px;
-}
 .band-tools-upper > .psec {
-  padding: 12px 14px;
+  padding: 10px 14px;
 }
 .band-tools-upper > .psec:last-child {
   flex: 1;
 }
 .band-tools-upper .field {
-  margin-block: 5px;
+  margin-block: 4px;
+}
+.band-tools-upper .select-trigger,
+.band-tools-upper .toggle-item,
+.band-tools-upper .num,
+.band-tools-upper .chipbtn {
+  min-height: 28px;
+  font-size: 13px;
 }
 .band-control-deck .psec h3 {
   font-size: 19px;
-}
-.band-tools-example {
-  width: clamp(148px, 17%, 208px);
-  margin-left: 16px;
 }
 .band-tools-example > .psec {
   flex: 1;
@@ -970,20 +967,6 @@ a:focus-visible {
 @media (max-width: 759px) {
   .stage-host:has(.band-control-deck) {
     min-height: 1140px;
-  }
-  .band-control-deck {
-    inset: 132px 0 56px;
-    grid-template-rows: 660px minmax(0, 1fr);
-    row-gap: 0;
-  }
-  .band-tools-upper {
-    align-self: start;
-    justify-self: stretch;
-    width: auto;
-    margin: 248px 16px 0;
-  }
-  .band-tools-example {
-    align-self: start;
   }
 }
 @media (max-width: 580px) {

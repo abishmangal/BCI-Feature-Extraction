@@ -2,7 +2,7 @@
 import type { Layout } from '../engine/types';
 import { COLORS } from '../engine/colors';
 import { POOL } from '../engine/registry';
-import { type LayoutCtx, H, PAD, TOP, W, finish, freqMax, setDecor } from './common';
+import { type LayoutCtx, PAD, TOP, finish, freqMax, setDecor } from './common';
 
 export const NAMED = [
   { name: 'delta', low: 0.5, high: 4 },
@@ -24,11 +24,14 @@ export interface P4Geo {
   binF: (k: number) => number;
   prism: { x: number; y: number; exitX: number; entryX: number };
   wave: { x0: number; x1: number; y0: number; y1: number };
+  controlRects: {
+    spectrum: { x: number; y: number; width: number; height?: number };
+    example: { x: number; y: number; width: number; height?: number };
+  };
 }
 
-export function p4Geo(c: LayoutCtx): P4Geo {
-  const w = W(c);
-  const h = H(c);
+export function p4Geo(c: Pick<LayoutCtx, 'stageSize' | 'data'>): P4Geo {
+  const { width: w, stageHeight: h } = c.stageSize;
   const wide = w >= 760;
   const spectrumControls = Math.min(450, w * 0.36);
   const exampleControls = Math.min(208, Math.max(148, w * 0.17));
@@ -36,8 +39,7 @@ export function p4Geo(c: LayoutCtx): P4Geo {
   const x1 = w - (wide ? spectrumControls + 32 : 24);
   const y0 = TOP + 26;
   const waveBottom = h - 18;
-  // Match the control deck's lower row, at half the previous waveform height.
-  const waveHeight = Math.max(110, (waveBottom - y0) * 0.215 - 16);
+  const waveHeight = 1.2 * Math.max(110, (waveBottom - y0) * 0.215 - 16);
   const waveTop = wide ? waveBottom - waveHeight : TOP + 806;
   const y1 = wide ? waveTop - 56 : TOP + 194;
   const fmax = freqMax(c.data?.sfreq ?? 250);
@@ -59,7 +61,15 @@ export function p4Geo(c: LayoutCtx): P4Geo {
       x0: wide ? exampleControls + 32 : PAD,
       x1: w - 24,
       y0: waveTop,
-      y1: wide ? waveBottom : waveTop + Math.max(110, (waveBottom - (TOP + 868)) / 2),
+      y1: wide ? waveBottom : waveTop + 1.2 * Math.max(110, (waveBottom - (TOP + 868)) / 2),
+    },
+    controlRects: {
+      spectrum: wide
+        ? { x: x1 + 16, y: y0, width: spectrumControls, height: y1 - y0 }
+        : { x: 16, y: TOP + 248, width: w - 32 },
+      example: wide
+        ? { x: 16, y: waveTop, width: exampleControls, height: waveHeight }
+        : { x: 16, y: TOP + 660, width: exampleControls },
     },
   };
 }
