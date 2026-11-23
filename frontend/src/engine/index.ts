@@ -95,7 +95,7 @@ export class Engine<Ctx = unknown> {
     return {
       width: w,
       height: h,
-      stageHeight: h - 56,
+      stageHeight: h,
       viewportCenter: viewport && rect
         ? { x: viewport.clientWidth / 2 - rect.left, y: viewport.clientHeight / 2 - rect.top }
         : undefined,

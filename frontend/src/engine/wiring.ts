@@ -1,6 +1,5 @@
 // Wiring between the vanilla store and the engine (no React). The engine reads settings through the
 // vanilla Zustand store, calls the pure layouts, and retargets springs.
-import { Graphics } from 'pixi.js';
 import { Engine } from './index';
 import { createPainters } from './painters';
 import type { TransitionDef } from './transitions';
@@ -12,7 +11,7 @@ import { classOrderRank, stratifiedSubset } from './slots';
 import { P } from './springs';
 import { store, get, set, emptyPreset, type AppState } from '../store/store';
 import { layoutFor, helpersFor, tablesFor } from '../layouts';
-import { REG, railNodes, type CtxSlots, type LayoutCtx } from '../layouts/common';
+import { REG, type CtxSlots, type LayoutCtx } from '../layouts/common';
 import { p5Geo } from '../layouts/page5';
 import { p1Stack } from '../layouts/page1';
 import { p7Geo } from '../layouts/page7';
@@ -295,42 +294,6 @@ function chipsDef(): TransitionDef {
 }
 
 // -------------------------------------------------------------------------------------------
-// Pipeline-rail change ripple: a pooled pulse (accent dot with a fading trail), 120 ms per node.
-const ripple = { g: null as Graphics | null, from: 0, t0: 0, active: false };
-function drawRipple(now: number): void {
-  const g = ripple.g;
-  if (!g) return;
-  g.clear();
-  if (!ripple.active) return;
-  const c = buildCtx();
-  const nodes = railNodes(c);
-  const el = now - ripple.t0;
-  const from = ripple.from - 1;
-  const pos = from + el / 120;
-  if (pos >= 7.6 || from >= 7) {
-    ripple.active = false;
-    return;
-  }
-  const at = (p: number): { x: number; y: number } => {
-    const k = Math.max(0, Math.min(7, Math.floor(p)));
-    const f = Math.min(1, p - k);
-    const a = nodes[k];
-    const b = nodes[Math.min(7, k + 1)];
-    return { x: a.x + (b.x - a.x) * f, y: a.y - 2 };
-  };
-  for (let k = 0; k < 6; k++) {
-    const p = pos - k * 0.06;
-    if (p < from) break;
-    const q = at(Math.min(7, p));
-    g.circle(q.x, q.y, 4 - k * 0.5).fill({ color: 0x2a9d8f, alpha: 1 - k * 0.16 });
-  }
-  for (let n = from + 1; n <= Math.min(7, Math.floor(pos)); n++) {
-    const fl = Math.max(0, 1 - (pos - n) * 2);
-    if (fl > 0)
-      g.circle(nodes[n].x, nodes[n].y - 2, 22).stroke({ width: 2, color: 0x2a9d8f, alpha: fl * 0.6 });
-  }
-}
-
 // -------------------------------------------------------------------------------------------
 let wired = false;
 let pending = 0;
@@ -387,12 +350,6 @@ export function wireEngine(): void {
       engine.applyCustom(chipsDef());
       return;
     }
-    if (s.ripple.seq !== prev.ripple.seq && !s.ui.reduceMotion) {
-      ripple.from = s.ripple.from;
-      ripple.t0 = performance.now();
-      ripple.active = true;
-      engine.wake();
-    }
     if (
       s.settings !== prev.settings ||
       s.results !== prev.results ||
@@ -403,17 +360,6 @@ export function wireEngine(): void {
       engine.dragging = s.ui.draggingWindow;
       schedule();
     }
-  });
-  engine.onFrame(() => {
-    const st = engine.stage;
-    if (!st) return;
-    if (!ripple.g) {
-      ripple.g = new Graphics();
-      st.railLayer.addChild(ripple.g);
-    }
-    drawRipple(performance.now());
-    if (ripple.active) st.setAnimating(-1, true);
-    else st.setAnimating(-1, false);
   });
 }
 

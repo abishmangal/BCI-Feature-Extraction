@@ -1,6 +1,6 @@
 import { Profiler, useEffect, useLayoutEffect, useRef } from 'react';
 import * as RTooltip from '@radix-ui/react-tooltip';
-import { PageHeader, ShapeBadge, TopBar } from './Shell';
+import { PageHeader, PipelineRail, ShapeBadge, TopBar } from './Shell';
 import { StageHost } from './StageHost';
 import { ChannelsControls, ControlsPanel, DatasetCards, LoadControls, MatrixControls, TransformControls } from './Panels';
 import { get, navigate, store, useStore } from '../store/store';
@@ -145,6 +145,7 @@ export function App() {
             {workspace === 'load' ? <LoadSidebar loaded={loaded} /> : null}
             {workspace === 'channels' ? <ChannelsControls /> : workspace === 'transform' ? <TransformControls /> : <ControlsPanel />}
           </main>
+          <PipelineRail />
         </div>
       </RTooltip.Provider>
     </Profiler>

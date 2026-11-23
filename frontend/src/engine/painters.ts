@@ -1,4 +1,4 @@
-// Painters: draw low-count containers (electrodes, cards, chips, rail) and decor from layout extras.
+// Painters: draw low-count containers (electrodes, cards, chips) and decor from layout extras.
 // Graphics are rebuilt only when extras, data, stage size or a reveal spring change; never per frame otherwise.
 import { BitmapText, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import type { ContainerView, Painters } from './stage';
@@ -1631,119 +1631,6 @@ function paintChip(v: ContainerView, ex: Ex): void {
   endText(v);
 }
 
-function paintRail(v: ContainerView, ex: Ex): void {
-  beginText(v);
-  text(v, 'l', str(ex.label), {
-    x: 0,
-    y: 18,
-    ax: 0.5,
-    size: 9,
-    color: ex.active ? COLORS.teal : COLORS.grey,
-  });
-  endText(v);
-  v.state.railScript = !!ex.script;
-  v.state.railActive = !!ex.active;
-  v.state.railPage = num(ex.page, 1);
-}
-
-/** One small line icon per page (about 14 px), centred on (cx, cy). */
-function railIcon(g: Graphics, page: number, cx: number, cy: number, color: number): void {
-  const st = { width: 1.6, color };
-  switch (page) {
-    case 1: // load: tray with a down arrow
-      g.moveTo(cx - 7, cy + 1)
-        .lineTo(cx - 7, cy + 6)
-        .lineTo(cx + 7, cy + 6)
-        .lineTo(cx + 7, cy + 1)
-        .stroke(st);
-      g.moveTo(cx, cy - 7)
-        .lineTo(cx, cy + 2)
-        .moveTo(cx - 3.5, cy - 1.5)
-        .lineTo(cx, cy + 2)
-        .lineTo(cx + 3.5, cy - 1.5)
-        .stroke(st);
-      break;
-    case 2: // time window: brackets around a wave
-      g.moveTo(cx - 4, cy - 7)
-        .lineTo(cx - 7, cy - 7)
-        .lineTo(cx - 7, cy + 7)
-        .lineTo(cx - 4, cy + 7)
-        .stroke(st);
-      g.moveTo(cx + 4, cy - 7)
-        .lineTo(cx + 7, cy - 7)
-        .lineTo(cx + 7, cy + 7)
-        .lineTo(cx + 4, cy + 7)
-        .stroke(st);
-      g.moveTo(cx - 4, cy)
-        .quadraticCurveTo(cx - 2, cy - 5, cx, cy)
-        .quadraticCurveTo(cx + 2, cy + 5, cx + 4, cy)
-        .stroke({ width: 1.3, color });
-      break;
-    case 3: // channels: head with electrodes
-      g.circle(cx, cy + 1, 6.5).stroke(st);
-      g.moveTo(cx - 2, cy - 5)
-        .lineTo(cx, cy - 8)
-        .lineTo(cx + 2, cy - 5)
-        .stroke({ width: 1.2, color });
-      for (const [dx, dy] of [
-        [-3, 1],
-        [0, 1],
-        [3, 1],
-        [0, -2.5],
-      ])
-        g.circle(cx + dx, cy + dy, 1.2).fill({ color });
-      break;
-    case 4: // frequency: sine wave
-      g.moveTo(cx - 8, cy);
-      for (let k = 1; k <= 16; k++) g.lineTo(cx - 8 + k, cy - 5 * Math.sin((k / 16) * Math.PI * 4));
-      g.stroke(st);
-      break;
-    case 5: // features: a small basket
-      g.poly([cx - 7, cy - 1, cx + 7, cy - 1, cx + 5, cy + 7, cx - 5, cy + 7]).stroke(st);
-      g.moveTo(cx - 4, cy - 1)
-        .quadraticCurveTo(cx, cy - 9, cx + 4, cy - 1)
-        .stroke(st);
-      g.moveTo(cx - 6, cy + 3)
-        .lineTo(cx + 6, cy + 3)
-        .stroke({ width: 1, color });
-      break;
-    case 6: // transform: bell curve
-      g.moveTo(cx - 8, cy + 6);
-      for (let k = 0; k <= 16; k++) {
-        const t = (k - 8) / 3;
-        g.lineTo(cx - 8 + k, cy + 6 - 12 * Math.exp(-0.5 * t * t));
-      }
-      g.stroke(st);
-      break;
-    case 7: // matrix: 3 x 3 grid
-      g.rect(cx - 7, cy - 7, 14, 14).stroke(st);
-      g.moveTo(cx - 2.3, cy - 7)
-        .lineTo(cx - 2.3, cy + 7)
-        .moveTo(cx + 2.3, cy - 7)
-        .lineTo(cx + 2.3, cy + 7)
-        .stroke({ width: 1, color });
-      g.moveTo(cx - 7, cy - 2.3)
-        .lineTo(cx + 7, cy - 2.3)
-        .moveTo(cx - 7, cy + 2.3)
-        .lineTo(cx + 7, cy + 2.3)
-        .stroke({ width: 1, color });
-      break;
-    default: // export: code chevrons
-      g.moveTo(cx - 3, cy - 5)
-        .lineTo(cx - 8, cy)
-        .lineTo(cx - 3, cy + 5)
-        .stroke(st);
-      g.moveTo(cx + 3, cy - 5)
-        .lineTo(cx + 8, cy)
-        .lineTo(cx + 3, cy + 5)
-        .stroke(st);
-      g.moveTo(cx + 1.5, cy - 7)
-        .lineTo(cx - 1.5, cy + 7)
-        .stroke({ width: 1.2, color });
-  }
-}
-
-// ---------------------------------------------------------------------------------------------
 export function createPainters(): Painters {
   return {
     init(kind: Kind, _id: string, view: ContainerView) {
@@ -1756,7 +1643,6 @@ export function createPainters(): Painters {
         gfx(view, 'fg');
         view.root.addChild(tl);
       }
-      if (kind === 'rail') gfx(view, 'mini');
     },
     paint(kind, id, view, extra, reveal) {
       if (kind === 'decor' && !extra) return; // parked decor carries no extras: nothing to draw
@@ -1767,7 +1653,6 @@ export function createPainters(): Painters {
       } else if (kind === 'electrode') paintElectrode(view, ex);
       else if (kind === 'card') paintCard(view, ex);
       else if (kind === 'chip') paintChip(view, ex);
-      else if (kind === 'rail') paintRail(view, ex);
     },
     tint(kind, _id, view, color) {
       if (kind === 'electrode') {
@@ -1792,17 +1677,6 @@ export function createPainters(): Painters {
           b?.scale.set(w / 100, h / 100);
           r?.scale.set(w / 100, h / 100);
         }
-      } else if (kind === 'rail') {
-        const g = view.state.mini as Graphics;
-        g.clear();
-        const active = !!view.state.railActive;
-        // Page icon only (no data miniature box).
-        if (active) g.circle(0, -2, 14).fill({ color: COLORS.teal });
-        else g.circle(0, -2, 13).fill({ color: COLORS.tealLight }).stroke({ width: 1, color: COLORS.teal });
-        railIcon(g, num(view.state.railPage, 1), 0, -2, active ? 0xffffff : COLORS.teal);
-        if (active) g.circle(0, -2, 19).stroke({ width: 2, color: COLORS.teal });
-        void w;
-        void h;
       }
     },
     animate(kind, id, view, dtMs) {

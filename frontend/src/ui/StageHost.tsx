@@ -1,12 +1,12 @@
 // Stage host: the one canvas (owned by the engine singleton), the accessibility overlay and DOM overlays.
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { engine, matrixRowAt, poseOf, stackTrialAt, buildCtx, chipsArrived } from '../engine/wiring';
-import { get, navigate, selectChannelGroup, set, updateSettings, updateUi, useStore } from '../store/store';
+import { get, selectChannelGroup, set, updateSettings, updateUi, useStore } from '../store/store';
 import { loadCsv, loadNpz } from '../store/effects';
 import { hideTip, registerTooltip, showTip } from './tooltip';
-import { PageHeader, RailNav, ShapeBadge } from './Shell';
+import { PageHeader, ShapeBadge } from './Shell';
 import { BandControls, CardPane, TimeWindowControls } from './Panels';
-import { railNodes, epochSpan, windowSnap, minWindow, freqMax } from '../layouts/common';
+import { epochSpan, windowSnap, minWindow, freqMax } from '../layouts/common';
 import { p2Geo } from '../layouts/page2';
 import { p3Geo, channelXY } from '../layouts/page3';
 import { p4Geo } from '../layouts/page4';
@@ -721,27 +721,6 @@ function MatrixOverlay() {
   );
 }
 
-function RailOverlay() {
-  return (
-    <>
-      {Array.from({ length: 8 }, (_, k) => (
-        <OverlayButton
-          key={k}
-          id={`rail:${k + 1}`}
-          testid={`rail-${k + 1}`}
-          pos={() => {
-            const n = railNodes(buildCtx())[k];
-            return { x: n.x - 26, y: n.y - 22, w: 52, h: 46, visible: true };
-          }}
-          label={`Go to page ${k + 1}`}
-          pressed={get().page === k + 1}
-          onActivate={() => navigate(k + 1)}
-        />
-      ))}
-    </>
-  );
-}
-
 function CodePanel() {
   const script = useStore((s) => s.results.export?.script ?? '');
   const reduced = useStore((s) => s.ui.reduceMotion);
@@ -961,7 +940,6 @@ export function StageHost() {
       data-testid="stage"
     >
       <canvas ref={canvas} className="stage-canvas" data-testid="canvas" />
-      <RailNav />
       {page !== 1 && page !== 7 ? <PageHeader /> : null}
       {page !== 1 && page !== 7 ? <ShapeBadge /> : null}
       <div className="overlay" ref={overlay} key={`ov${dataVersion}:${nChannels}`}>
@@ -970,7 +948,6 @@ export function StageHost() {
         {hasData && page === 4 ? <BandHandles /> : null}
         {hasData && page === 5 ? <CardOverlay /> : null}
         {hasData && page === 7 ? <MatrixOverlay /> : null}
-        <RailOverlay />
       </div>
       {page === 2 ? <TimeWindowControls /> : null}
       {hasData && page === 4 ? <BandControls /> : null}

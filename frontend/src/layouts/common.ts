@@ -3,14 +3,11 @@ import { Registry, type Kind } from '../engine/registry';
 import type { Layout, StageSize, TargetState } from '../engine/types';
 import type { Data, Results, Settings, Ui } from '../store/store';
 import type { Preset } from '../api/types';
-import { CLASS_COLORS, COLORS } from '../engine/colors';
+import { CLASS_COLORS } from '../engine/colors';
 
 export const REG = new Registry();
 export const TOP = 132; // below the DOM page header
 export const PAD = 32;
-export const RAIL_H = 56;
-/** Width reserved at the right end of the rail for Back / page / Next. */
-export const RAIL_NAV_W = 230;
 
 export interface ValSlots {
   /** Trials shown in the val pool (original indices, original order). */
@@ -73,7 +70,6 @@ export function park(kind: Kind, c: LayoutCtx): TargetState {
 
 /** Fill every id that the page did not set with its default parking pose. */
 export function finish(m: Layout, c: LayoutCtx): Layout {
-  rail(m, c);
   for (let i = 0; i < REG.n; i++) {
     const id = REG.ids[i];
     if (!m.has(id)) m.set(id, park(REG.kinds[i], c));
@@ -100,16 +96,8 @@ export function setDecor(
 }
 
 // -------------------------------------------------------------------------------------------
-// Pipeline rail (section 8): always visible in the bottom 56 px.
-export function railNodes(c: LayoutCtx): { x: number; y: number }[] {
-  const w = W(c);
-  const y = H(c) + RAIL_H / 2 - 6;
-  const x0 = 60;
-  const x1 = w - RAIL_NAV_W - 50; // the right end of the rail holds the page navigation controls
-  return Array.from({ length: 8 }, (_, k) => ({ x: x0 + ((x1 - x0) * k) / 7, y }));
-}
-
-export function shapes(c: LayoutCtx): (number[] | null)[] {
+// Trial and feature dimensions shown in the pipeline rail.
+export function shapes(c: Pick<LayoutCtx, 'data' | 'settings' | 'backendResults'>): (number[] | null)[] {
   const d = c.data;
   const r = c.backendResults;
   if (!d) return [null, null, null, null, null, null, null, null];
@@ -126,44 +114,6 @@ export function shapes(c: LayoutCtx): (number[] | null)[] {
   const s5 = r.features?.shape ?? null;
   const s7 = r.evaluate?.shape ?? null;
   return [s1, s2, s3, s4, s5, s5, s7, null];
-}
-
-function rail(m: Layout, c: LayoutCtx): void {
-  const nodes = railNodes(c);
-  const sh = shapes(c);
-  const labels = ['', '', '', ' (filtered)', ' (features)', ' (transformed)', ' (selected)', ''];
-  nodes.forEach((p, k) => {
-    const s = sh[k];
-    const active = c.page === k + 1;
-    let w = 6;
-    let h = 6;
-    if (s) {
-      const lg = (v: number): number => Math.log10(Math.max(1, v)) / Math.log10(10000);
-      if (s.length === 3) {
-        w = 6 + 30 * lg(s[2]);
-        h = 4 + 24 * lg(s[1] * 10);
-      } else {
-        w = 6 + 30 * lg(s[1] * 10);
-        h = 4 + 24 * lg(s[0]);
-      }
-    }
-    m.set(`rail:${k + 1}`, {
-      x: p.x,
-      y: p.y,
-      w,
-      h,
-      scaleX: active ? 1.12 : 1,
-      scaleY: active ? 1.12 : 1,
-      alpha: 1,
-      color: active ? COLORS.accent : COLORS.ink,
-      extra: {
-        label: s ? s.join('x') + labels[k] : k === 7 ? 'script' : '-',
-        active,
-        script: k === 7,
-        page: k + 1,
-      },
-    });
-  });
 }
 
 // -------------------------------------------------------------------------------------------

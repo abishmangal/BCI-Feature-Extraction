@@ -30,7 +30,7 @@ import { Basket } from './Basket';
 import { FeatureEquations, FisherEquation, SignedLogEquation } from './Equations';
 import { Scalar } from '../engine/scalar';
 import { NAMED, p4Geo } from '../layouts/page4';
-import { epochSpan, freqMax, RAIL_H } from '../layouts/common';
+import { epochSpan, freqMax } from '../layouts/common';
 
 const NONE: never[] = [];
 const PROBE_CHART = engine.core.reg.index.get('decor:2:minimap')!;
@@ -634,7 +634,7 @@ export const BandControls = memo(function BandControls() {
     const align = () => {
       const width = el.clientWidth;
       const height = el.clientHeight;
-      const { controlRects } = p4Geo({ data, stageSize: { width, height, stageHeight: height - RAIL_H } });
+      const { controlRects } = p4Geo({ data, stageSize: { width, height, stageHeight: height } });
       for (const [panel, rect] of [[upper, controlRects.spectrum], [lower, controlRects.example]] as const) {
         Object.assign(panel.style, {
           left: `${rect.x}px`,

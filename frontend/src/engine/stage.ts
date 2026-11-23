@@ -57,7 +57,6 @@ export class Stage {
   private painters: Painters;
   readonly camera = new Container({ label: 'camera' });
   readonly layers: Record<string, Container> = {};
-  readonly railLayer = new Container({ label: 'rail' });
   private meshes = new Map<number, RibbonMesh>();
   private particles = new Map<number, Particle>();
   private pcs: Record<ParticleKind, ParticleContainer> = {} as never;
@@ -207,7 +206,6 @@ export class Stage {
       this.camera.addChild(c);
     }
     app.stage.addChild(this.camera);
-    app.stage.addChild(this.railLayer);
     this.camera.addChild(this.cardMask);
 
     const tex = this.textures!;
@@ -268,7 +266,6 @@ export class Stage {
             root,
           );
         } else if (kind === 'electrode' || kind === 'spark') this.layers.elec.addChild(root);
-        else if (kind === 'rail') this.railLayer.addChild(root);
         else this.layers.cards.addChild(root);
       }
     }

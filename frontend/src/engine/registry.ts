@@ -13,7 +13,6 @@ export type Kind =
   | 'card'
   | 'val'
   | 'chip'
-  | 'rail'
   | 'decor';
 
 export const KINDS: Kind[] = [
@@ -28,7 +27,6 @@ export const KINDS: Kind[] = [
   'card',
   'val',
   'chip',
-  'rail',
   'decor',
 ];
 
@@ -141,9 +139,6 @@ export class Registry {
     });
     range('chip', () => {
       PAGES.forEach((p, s) => add('chip', `chip:${p}`, s));
-    });
-    range('rail', () => {
-      PAGES.forEach((p, s) => add('rail', `rail:${p}`, s));
     });
     range('decor', () => {
       DECOR_IDS.forEach((d, s) => add('decor', d, s));

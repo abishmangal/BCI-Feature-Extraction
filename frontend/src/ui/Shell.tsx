@@ -1,8 +1,9 @@
 // Top bar, page header (title, caption, hint, tags) and the shape badge. DOM only.
-import { memo } from 'react';
-import { navigate, updateUi, useStore, type AppState } from '../store/store';
+import { memo, useEffect, useMemo, useRef } from 'react';
+import { navigate, store, updateUi, useStore, type AppState } from '../store/store';
 import { CAPTIONS, PAGE_TITLES } from './meta';
 import { Switch } from './controls';
+import { shapes } from '../layouts/common';
 
 export const TopBar = memo(function TopBar() {
   const tag = useStore((s) =>
@@ -41,10 +42,68 @@ export const TopBar = memo(function TopBar() {
 });
 
 /** Page navigation at the right end of the pipeline rail. */
-export const RailNav = memo(function RailNav() {
+const RAIL_ICONS = [
+  'M3 11v5h14v-5 M10 3v9m-4-4 4 4 4-4',
+  'M6 3H3v14h3m8-14h3v14h-3 M6 10q2-5 4 0t4 0',
+  'M8 5l2-3 2 3 M16.5 11a6.5 6.5 0 1 1-13 0 6.5 6.5 0 1 1 13 0 M7 11h.1m2.9 0h.1m2.9 0h.1m-3.1-3h.1',
+  'M2 10q2-10 4 0t4 0 4 0 4 0',
+  'M3 9h14l-2 8H5z M6 9q4-9 8 0 M4 13h12',
+  'M2 16c6 0 4-12 8-12s2 12 8 12',
+  'M3 3h14v14H3z M8 3v14m4-14v14 M3 8h14m-14 4h14',
+  'm7 5-5 5 5 5m6-10 5 5-5 5 M12 3 8 17',
+];
+const RAIL_SUFFIXES = ['', '', '', ' (filtered)', ' (features)', ' (transformed)', ' (selected)', ''];
+
+export const PipelineRail = memo(function PipelineRail() {
   const page = useStore((s) => s.page);
+  const data = useStore((s) => s.data);
+  const settings = useStore((s) => s.settings);
+  const results = useStore((s) => s.results);
+  const labels = useMemo(
+    () => shapes({ data, settings, backendResults: results })
+      .map((shape, k) => shape ? shape.join('x') + RAIL_SUFFIXES[k] : k === 7 ? 'script' : '-'),
+    [data, settings, results],
+  );
+  const steps = useRef<HTMLDivElement>(null);
+  useEffect(() => store.subscribe((s, prev) => {
+    if (s.ripple.seq === prev.ripple.seq || s.ui.reduceMotion ||
+        matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    steps.current?.querySelectorAll('.rail-icon').forEach((icon, k) => {
+      if (k < s.ripple.from - 1) return;
+      icon.animate(
+        [{ boxShadow: '0 0 0 3px var(--teal)' }, { boxShadow: '0 0 0 8px transparent' }],
+        { duration: 270, delay: (k - s.ripple.from + 1) * 120, easing: 'ease-out' },
+      );
+    });
+  }), []);
   return (
-    <div className="rail-nav" role="navigation" aria-label="Page navigation">
+    <nav className="pipeline-rail" aria-label="Page navigation">
+      <div className="rail-steps" ref={steps}>
+        {RAIL_ICONS.map((path, k) => (
+          <button
+            key={path}
+            className="rail-step"
+            data-testid={`rail-${k + 1}`}
+            aria-current={page === k + 1 ? 'step' : undefined}
+            aria-label={`Go to page ${k + 1}`}
+            title={PAGE_TITLES[k]}
+            onClick={() => navigate(k + 1)}
+          >
+            <span className="rail-icon">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d={path} /></svg>
+            </span>
+            <span className="rail-label">{labels[k]}</span>
+          </button>
+        ))}
+      </div>
+      <RailNav page={page} />
+    </nav>
+  );
+});
+
+function RailNav({ page }: { page: number }) {
+  return (
+    <div className="rail-nav">
       <button
         className="btn ghost nav-btn"
         onClick={() => navigate(page - 1)}
@@ -64,7 +123,7 @@ export const RailNav = memo(function RailNav() {
       </button>
     </div>
   );
-});
+}
 
 export function freeTags(s: AppState): string[] {
   const p = s.page;
