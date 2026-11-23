@@ -114,9 +114,10 @@ body,
 }
 .electrode-preview {
   position: absolute;
-  right: 16px;
-  bottom: 62px;
-  width: min(312px, 48%);
+  top: 0;
+  left: 0;
+  width: min(312px, 46%);
+  visibility: hidden;
   padding: 12px;
   border: 1px solid var(--hairline);
   border-radius: 8px;
@@ -127,10 +128,6 @@ body,
   display: block;
   width: 100%;
   margin-top: 8px;
-}
-.electrode-preview-left {
-  right: auto;
-  left: 16px;
 }
 .electrode-preview-axis,
 .electrode-preview-legend {

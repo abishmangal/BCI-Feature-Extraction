@@ -1,5 +1,5 @@
 // Stage host: the one canvas (owned by the engine singleton), the accessibility overlay and DOM overlays.
-import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { engine, matrixRowAt, poseOf, stackTrialAt, buildCtx, chipsArrived } from '../engine/wiring';
 import { get, navigate, set, updateSettings, updateUi, useStore } from '../store/store';
 import { loadCsv, loadNpz } from '../store/effects';
@@ -111,7 +111,6 @@ function ElectrodeOverlay() {
         const inc = sel.has(name.toLowerCase());
         const val = values ? values[i] : null;
         const label = `${name}, ${inc ? 'included' : 'excluded'}${val !== null && val !== undefined ? `, map value ${val.toFixed(2)} ${unit}` : ''}`;
-        const tipText = `${name} (${data.regions[i]}), ${inc ? 'included' : 'excluded'}${val !== null && val !== undefined ? `, ${val.toFixed(2)} ${unit}` : ''}`;
         return (
           <OverlayButton
             key={name}
@@ -122,10 +121,8 @@ function ElectrodeOverlay() {
             pressed={inc}
             className="ov-round"
             onActivate={() => toggleChannel(name)}
-            onHover={(on, e) => {
+            onHover={(on) => {
               updateUi({ focusChannel: on ? name : null });
-              if (on && e) showTip(e.clientX - hostOffset().x, e.clientY - hostOffset().y, tipText);
-              else hideTip();
             }}
           />
         );
@@ -141,16 +138,56 @@ const elPos =
   };
 
 function ElectrodePreview() {
+  const preview = useRef<HTMLElement>(null);
   const data = useStore((s) => s.data);
   const channel = useStore((s) => s.ui.focusChannel);
-  const spark = useStore((s) => s.results.channels?.spark);
+  const result = useStore((s) => s.results.channels);
+  const included = useStore((s) => channel !== null && s.settings.channels.includes(channel));
   const shown = useStore((s) => s.settings.showClasses);
   const offline = useStore((s) => s.offline);
   const status = useStore((s) => s.status.channels);
-  if (!data || !channel) return null;
-  const index = data.channels.indexOf(channel);
-  if (index < 0) return null;
-  const onRight = (data.positions[index]?.[0] ?? 0) > 0;
+  const index = data && channel ? data.channels.indexOf(channel) : -1;
+  useLayoutEffect(() => {
+    const card = preview.current;
+    const stage = card?.parentElement;
+    if (!card || !stage) return;
+
+    const place = () => {
+      const electrode = piecePos(`electrode:${index}`);
+      const margin = 8;
+      const gap = 12;
+      const width = card.offsetWidth;
+      const height = card.offsetHeight;
+      const right = electrode.x + electrode.w + gap;
+      const left = electrode.x - gap - width;
+      const maxX = stage.clientWidth - width - margin;
+      const maxY = stage.clientHeight - height - margin;
+      let x = right;
+      let y = electrode.y + (electrode.h - height) / 2;
+      if (right > maxX) {
+        x = left;
+        if (left < margin) {
+          x = electrode.x + (electrode.w - width) / 2;
+          y = electrode.y + electrode.h + gap;
+          if (y > maxY) y = electrode.y - gap - height;
+        }
+      }
+      card.style.transform = `translate(${Math.max(margin, Math.min(x, maxX))}px, ${Math.max(margin, Math.min(y, maxY))}px)`;
+      card.style.visibility = electrode.visible ? 'visible' : 'hidden';
+    };
+    place();
+    const stop = engine.onFrame(place);
+    const resize = new ResizeObserver(place);
+    resize.observe(stage);
+    resize.observe(card);
+    return () => {
+      stop();
+      resize.disconnect();
+    };
+  }, [index]);
+  if (!data || !channel || index < 0) return null;
+  const spark = result?.spark;
+  const value = result?.map.values?.[index];
   const traces = data.classNames.flatMap((name, k) => {
     if (!spark || !shown.includes(k)) return [];
     const offset = (index * data.classNames.length + k) * 60;
@@ -160,10 +197,15 @@ function ElectrodePreview() {
 
   return (
     <section
-      className={`electrode-preview${onRight ? ' electrode-preview-left' : ''}`}
+      ref={preview}
+      className="electrode-preview"
       aria-label={`${channel} waveform preview`}
     >
       <strong>{channel}</strong>
+      <div className="small">
+        {data.regions[index]} · {included ? 'Included' : 'Excluded'}
+        {typeof value === 'number' ? ` · ${value.toFixed(2)} ${result?.map.unit ?? ''}` : ''}
+      </div>
       <div className="small">{offline ? 'Default sample window' : 'Selected time window'} · Class means</div>
       {status.error ? <p className="small">{status.error}</p> : status.loading || !spark ? (
         <p className="small">Loading waveform…</p>
