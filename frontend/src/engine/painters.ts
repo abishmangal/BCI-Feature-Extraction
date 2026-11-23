@@ -9,6 +9,20 @@ import { Scalar } from './scalar';
 type Ex = Record<string, unknown>;
 const num = (v: unknown, d = 0): number => (typeof v === 'number' && isFinite(v) ? v : d);
 const str = (v: unknown, d = ''): string => (typeof v === 'string' ? v : d);
+const GRAPH_TICK = { size: 13, color: COLORS.ink } as const;
+const GRAPH_LABEL = { font: 'sans', size: 14, color: COLORS.ink } as const;
+const GRAPH_TITLE = { font: 'sans', size: 17, color: COLORS.ink } as const;
+
+function spacedTicks<T extends { label: string }>(ticks: T[], position: (tick: T) => number, vertical = false): T[] {
+  let edge = -Infinity;
+  return ticks.slice().sort((a, b) => position(a) - position(b)).filter((tick) => {
+    const center = position(tick);
+    const half = vertical ? 9 : Math.max(13, tick.label.length * 4 + 4);
+    if (center - half < edge) return false;
+    edge = center + half;
+    return true;
+  });
+}
 
 // ---------------------------------------------------------------------------------------------
 // Text helpers: BitmapText objects are created once per (view, key) and reused (never per frame).
@@ -115,7 +129,12 @@ type DecorPaint = (view: ContainerView, ex: Ex, reveal: number) => void;
 const DECOR: Record<string, DecorPaint> = {
   '1:droptext': (v, ex) => {
     beginText(v);
-    text(v, 't', str(ex.text), {
+    if (ex.plot) {
+      const { x0, x1, y0, y1, start, end } = ex.plot as Record<string, number>;
+      text(v, 'title', 'EEG waveforms by trial', { ...GRAPH_TITLE, x: x0, y: y0 - 22 });
+      text(v, 'start', `${fmt(start)} s`, { ...GRAPH_TICK, x: x0, y: y1 + 4 });
+      text(v, 'end', `${fmt(end)} s`, { ...GRAPH_TICK, x: x1, y: y1 + 4, ax: 1 });
+    } else text(v, 't', str(ex.text), {
       x: num(ex.x),
       y: num(ex.y),
       ax: 0.5,
@@ -140,9 +159,11 @@ const DECOR: Record<string, DecorPaint> = {
       g.moveTo(t.x, y)
         .lineTo(t.x, y + 5)
         .stroke({ width: 1, color: COLORS.ink });
-      text(v, `t${t.label}`, t.label, { x: t.x, y: y + 8, ax: 0.5 });
     }
-    text(v, 'unit', 'time (s)', { x: x1, y: y + 22, ax: 1, color: COLORS.grey });
+    for (const t of spacedTicks((ex.ticks as { x: number; label: string }[]) ?? [], (t) => t.x)) {
+      if (t.x <= xr + 0.5) text(v, `t${t.label}`, t.label, { ...GRAPH_TICK, x: t.x, y: y + 7, ax: 0.5 });
+    }
+    text(v, 'unit', 'Time (s)', { ...GRAPH_LABEL, x: x0, y: y + 23 });
     endText(v);
   },
   '2:cue': (v, ex, reveal) => {
@@ -154,7 +175,7 @@ const DECOR: Record<string, DecorPaint> = {
     const y1 = y0 + (num(ex.y1) - y0) * Math.min(1, reveal);
     dashed(g, x, y0, x, y1);
     g.stroke({ width: 1.2, color: COLORS.ink });
-    text(v, 'l', str(ex.label), { x: x + 4, y: y0 - 14, color: COLORS.ink });
+    text(v, 'l', str(ex.label), { ...GRAPH_LABEL, x: x + 4, y: y0 + 2 });
     endText(v);
   },
   '2:zone': (v, ex, reveal) => {
@@ -169,8 +190,8 @@ const DECOR: Record<string, DecorPaint> = {
       });
       text(v, 'l', str(ex.label).toUpperCase(), {
         x: num(ex.x0) + 4,
-        y: num(ex.y0) + 3,
-        size: 9,
+        y: num(ex.y0) + 19,
+        ...GRAPH_LABEL,
         color: COLORS.accent,
         alpha: a,
       });
@@ -200,7 +221,7 @@ const DECOR: Record<string, DecorPaint> = {
         .lineTo(x + 1.5, (y0 + y1) / 2 + 8)
         .stroke({ width: 1, color: 0xffffff, alpha: ha });
     }
-    text(v, 'l', str(ex.label), { x: (x0 + x1) / 2, y: y0 - 16, ax: 0.5, color: COLORS.teal });
+    text(v, 'l', str(ex.label), { ...GRAPH_TICK, x: (x0 + x1) / 2, y: y0 - 17, ax: 0.5, color: COLORS.teal });
     endText(v);
   },
   '2:minimap': (v, ex) => {
@@ -213,27 +234,30 @@ const DECOR: Record<string, DecorPaint> = {
     const h = num(ex.height);
     g.rect(x0, y0, w, h).fill({ color: COLORS.panel }).stroke({ width: 1, color: COLORS.hairline });
     const ticks = (ex.ticks ?? []) as { fraction: number; label: string }[];
-    ticks.forEach(({ fraction, label }, i) => {
+    ticks.forEach(({ fraction }) => {
       const x = x0 + w * fraction;
       const y = y0 + h * (1 - fraction);
       g.moveTo(x, y0).lineTo(x, y0 + h).moveTo(x0, y).lineTo(x0 + w, y)
         .stroke({ width: 1, color: COLORS.hairline, alpha: 0.5 });
-      text(v, `xt${i}`, label, { x, y: y0 + h + 5, ax: 0.5, size: 10, color: COLORS.grey });
-      text(v, `yt${i}`, label, { x: x0 - 6, y, ax: 1, ay: 0.5, size: 10, color: COLORS.grey });
     });
+    for (const t of spacedTicks(ticks, (t) => x0 + w * t.fraction)) {
+      text(v, `xt${t.fraction}`, t.label, { ...GRAPH_TICK, x: x0 + w * t.fraction, y: y0 + h + 5, ax: 0.5 });
+    }
+    for (const t of spacedTicks(ticks, (t) => y0 + h * (1 - t.fraction), true)) {
+      text(v, `yt${t.fraction}`, t.label, { ...GRAPH_TICK, x: x0 - 6, y: y0 + h * (1 - t.fraction), ax: 1, ay: 0.5 });
+    }
     dashed(g, x0, y0 + h, x0 + w, y0, 2, 3);
     g.stroke({ width: 1, color: COLORS.grey });
-    text(v, 'x', str(ex.xLabel), { x: x0 + w / 2, y: y0 + h + 22, ax: 0.5, size: 11, color: COLORS.grey });
+    text(v, 'x', str(ex.xLabel), { ...GRAPH_LABEL, x: x0 + w / 2, y: y0 + h + 23, ax: 0.5, wrap: w, align: 'center' });
     text(v, 'y', str(ex.yLabel), {
       x: x0 - 48,
       y: y0 + h / 2,
       ax: 0.5,
       ay: 1,
-      size: 11,
-      color: COLORS.grey,
+      ...GRAPH_LABEL,
       rot: -Math.PI / 2,
     });
-    text(v, 't', 'Class separability', { x: x0, y: y0 - 22, size: 14, color: COLORS.ink });
+    text(v, 't', 'Class separability', { ...GRAPH_TITLE, x: x0, y: y0 - 24 });
     endText(v);
   },
   // ----------------------------------------------------------------- page 3
@@ -256,7 +280,7 @@ const DECOR: Record<string, DecorPaint> = {
       x: num(ex.cx),
       y: num(ex.cy) + num(ex.R) + 14,
       ax: 0.5,
-      size: 10,
+      ...GRAPH_LABEL,
       color: COLORS.grey,
     });
     endText(v);
@@ -391,7 +415,10 @@ const DECOR: Record<string, DecorPaint> = {
     const ramp = ex.ramp as { from: number; to: number; mid?: number } | undefined;
     if (ramp) {
       const n = 40;
-      const w = 160;
+      const labelWidth = num(ex.labelWidth, 250);
+      const name = text(v, 'n', str(ex.name), { ...GRAPH_TITLE, x, y, wrap: labelWidth });
+      const rampY = y + Math.max(26, name.height + 4);
+      const w = 190;
       for (let i = 0; i < n; i++) {
         const t = i / (n - 1);
         const col =
@@ -400,19 +427,17 @@ const DECOR: Record<string, DecorPaint> = {
               ? mix(ramp.from, ramp.mid, t * 2)
               : mix(ramp.mid, ramp.to, (t - 0.5) * 2)
             : mix(ramp.from, ramp.to, t);
-        g.rect(x + (i * w) / n, y + 22, w / n + 0.5, 10).fill({ color: col });
+        g.rect(x + (i * w) / n, rampY, w / n + 0.5, 10).fill({ color: col });
       }
-      g.rect(x, y + 22, w, 10).stroke({ width: 1, color: COLORS.hairline });
-      text(v, 'n', str(ex.name), { x, y, size: 10, color: COLORS.ink });
-      text(v, 'lo', `${fmt(num(ex.vmin))} ${str(ex.unit)}`, { x, y: y + 36, size: 9, color: COLORS.grey });
+      g.rect(x, rampY, w, 10).stroke({ width: 1, color: COLORS.hairline });
+      text(v, 'lo', `${fmt(num(ex.vmin))} ${str(ex.unit)}`, { ...GRAPH_TICK, x, y: rampY + 14 });
       text(v, 'hi', `${fmt(num(ex.vmax))} ${str(ex.unit)}`, {
         x: x + w,
-        y: y + 36,
+        y: rampY + 14,
         ax: 1,
-        size: 9,
-        color: COLORS.grey,
+        ...GRAPH_TICK,
       });
-      if (ex.note) text(v, 'note', str(ex.note), { x, y: y + 50, size: 9, color: COLORS.grey });
+      if (ex.note) text(v, 'note', str(ex.note), { ...GRAPH_LABEL, x, y: rampY + 33, wrap: labelWidth });
     }
     endText(v);
   },
@@ -423,7 +448,7 @@ const DECOR: Record<string, DecorPaint> = {
     const r = ex.rect as { x0: number; y0: number; x1: number; y1: number } | null;
     if (r) {
       g.roundRect(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0, 6).stroke({ width: 1, color: COLORS.hairline });
-      text(v, 'l', str(ex.label), { x: r.x0 + 6, y: r.y0 - 13, size: 9, color: COLORS.grey });
+      text(v, 'l', str(ex.label), { ...GRAPH_LABEL, x: r.x0 + 6, y: r.y0 - 17 });
     }
     endText(v);
   },
@@ -443,20 +468,20 @@ const DECOR: Record<string, DecorPaint> = {
     g.moveTo(x0, y1)
       .lineTo(x0, y1 - (y1 - y0) * r)
       .stroke({ width: 1, color: COLORS.ink });
-    for (const t of (ex.fTicks as { x: number; label: string }[]) ?? []) {
+    for (const t of spacedTicks((ex.fTicks as { x: number; label: string }[]) ?? [], (t) => t.x)) {
       g.moveTo(t.x, y1)
         .lineTo(t.x, y1 + 4)
         .stroke({ width: 1, color: COLORS.ink, alpha: r });
-      text(v, `f${t.label}`, t.label, { x: t.x, y: y1 + 6, ax: 0.5, alpha: r });
+      text(v, `f${t.label}`, t.label, { ...GRAPH_TICK, x: t.x, y: y1 + 6, ax: 0.5, alpha: r });
     }
-    for (const t of (ex.dbTicks as { y: number; label: string }[]) ?? []) {
+    for (const t of spacedTicks((ex.dbTicks as { y: number; label: string }[]) ?? [], (t) => t.y, true)) {
       g.moveTo(x0 - 4, t.y)
         .lineTo(x0, t.y)
         .stroke({ width: 1, color: COLORS.ink, alpha: r });
-      text(v, `d${t.label}`, t.label, { x: x0 - 7, y: t.y, ax: 1, ay: 0.5, alpha: r });
+      text(v, `d${t.label}`, t.label, { ...GRAPH_TICK, x: x0 - 7, y: t.y, ax: 1, ay: 0.5, alpha: r });
     }
-    text(v, 'fx', 'frequency (Hz)', { x: x1, y: y1 + 20, ax: 1, color: COLORS.grey, alpha: r });
-    text(v, 'fy', 'power (dB, uV^2/Hz)', { x: x0 - 44, y: y0 - 16, color: COLORS.grey, alpha: r });
+    text(v, 'fx', 'Frequency (Hz)', { ...GRAPH_LABEL, x: x1, y: y1 + 24, ax: 1, alpha: r });
+    text(v, 'fy', 'Power spectral density (dB, µV²/Hz)', { ...GRAPH_LABEL, x: x0 - 27, y: y0 - 18, alpha: r });
     endText(v);
   },
   '4:bands': (v, ex) => {
@@ -465,16 +490,28 @@ const DECOR: Record<string, DecorPaint> = {
     beginText(v);
     const y0 = num(ex.y0);
     const y1 = num(ex.y1);
-    (ex.regions as { x0: number; x1: number; label: string }[]).forEach((r, k) => {
+    const regions = ex.regions as { x0: number; x1: number; label: string }[];
+    const laneEdges = [-Infinity, -Infinity, -Infinity];
+    regions.forEach((r, k) => {
       g.rect(r.x0, y0, r.x1 - r.x0, y1 - y0).fill({ color: COLORS.hairline, alpha: 0.25 });
-      text(v, `r${k}`, r.label, { x: r.x0 + 3, y: y0 + 2 + (k % 2) * 12, size: 9, color: COLORS.grey });
+      const width = r.label.length * 7 + 6;
+      const x = Math.min(r.x0 + 3, num(ex.x1) - width);
+      const lane = laneEdges.findIndex((edge) => x >= edge);
+      if (lane < 0) return;
+      laneEdges[lane] = x + width;
+      text(v, `r${k}`, r.label, { ...GRAPH_LABEL, x, y: y0 + 3 + lane * 18 });
     });
-    (ex.stim as { x: number; label: string }[]).forEach((s, k) => {
+    const stimuli = (ex.stim as { x: number; label: string }[]).slice().sort((a, b) => a.x - b.x);
+    stimuli.forEach((s) => {
       g.moveTo(s.x, y1)
         .lineTo(s.x, y1 - 14)
         .stroke({ width: 1, color: COLORS.ink });
-      text(v, `s${k}`, s.label, { x: s.x, y: y1 - 26 - (k % 2) * 10, ax: 0.5, size: 8, color: COLORS.ink });
     });
+    for (const lane of [0, 1]) {
+      for (const s of spacedTicks(stimuli.filter((_, i) => i % 2 === lane), (s) => s.x)) {
+        text(v, `s${lane}:${s.label}`, s.label, { ...GRAPH_LABEL, x: s.x, y: y1 - 32 - lane * 18, ax: 0.5 });
+      }
+    }
     endText(v);
   },
   '4:gate': (v, ex) => {
@@ -530,7 +567,7 @@ const DECOR: Record<string, DecorPaint> = {
     ] as [number, string][]) {
       g.moveTo(x, num(ex.y0)).lineTo(x, num(ex.y1)).stroke({ width: 1.5, color: COLORS.teal });
       g.roundRect(x - 5, num(ex.y0) - 2, 10, 18, 3).fill({ color: COLORS.teal });
-      text(v, lab, lab, { x, y: num(ex.y0) - 16, ax: 0.5, color: COLORS.teal });
+      text(v, lab, lab, { ...GRAPH_TICK, x, y: num(ex.y0) - 19, ax: 0.5, color: COLORS.teal });
     }
     endText(v);
   },
@@ -542,8 +579,18 @@ const DECOR: Record<string, DecorPaint> = {
       width: 1,
       color: COLORS.hairline,
     });
-    text(v, 'l', str(ex.label), { x: num(ex.x0) + 6, y: num(ex.y0) + 4, size: 10, color: COLORS.grey });
-    text(v, 'n', str(ex.note), { x: num(ex.x1) - 6, y: num(ex.y0) + 4, ax: 1, size: 10, color: COLORS.ink });
+    const x0 = num(ex.x0) + 8;
+    const x1 = num(ex.x1) - 8;
+    const y0 = num(ex.y0) + 5;
+    const y1 = num(ex.y1) - 18;
+    const tight = x1 - x0 < 320;
+    text(v, 'l', str(ex.label), { ...GRAPH_TITLE, x: x0, y: y0 });
+    text(v, 'n', str(ex.note), { ...GRAPH_LABEL, x: x1, y: y0 + (tight ? 19 : 2), ax: 1 });
+    const bounds = ex.times as [number, number] | undefined;
+    if (bounds) {
+      text(v, 'start', `${fmt(bounds[0])} s`, { ...GRAPH_TICK, x: x0, y: y1 });
+      text(v, 'end', `${fmt(bounds[1])} s`, { ...GRAPH_TICK, x: x1, y: y1, ax: 1 });
+    }
     endText(v);
   },
   '4:prism': (v, ex, reveal) => {
@@ -682,13 +729,19 @@ const DECOR: Record<string, DecorPaint> = {
     g.moveTo(x0, y1)
       .lineTo(x0 + (x1 - x0) * Math.min(1, reveal), y1)
       .stroke({ width: 1, color: COLORS.ink });
-    for (const t of (ex.ticks as { x: number; label: string }[]) ?? []) {
+    for (const t of spacedTicks((ex.ticks as { x: number; label: string }[]) ?? [], (t) => t.x)) {
       g.moveTo(t.x, y1)
         .lineTo(t.x, y1 + 4)
         .stroke({ width: 1, color: COLORS.ink });
-      text(v, `t${t.label}`, t.label, { x: t.x, y: y1 + 6, ax: 0.5 });
+      text(v, `t${t.label}`, t.label, { ...GRAPH_TICK, x: t.x, y: y1 + 6, ax: 0.5 });
     }
-    text(v, 'lab', str(ex.label), { x: x0, y: num(ex.y0) - 22, size: 11 });
+    text(v, 'lab', `Distribution of ${str(ex.label)}`, {
+      ...GRAPH_TITLE, x: x0, y: num(ex.y0) - 4, ay: 1, wrap: x1 - x0,
+    });
+    text(v, 'unit', 'Feature value', { ...GRAPH_LABEL, x: (x0 + x1) / 2, y: y1 + 24, ax: 0.5 });
+    text(v, 'count', 'Trials per bin', {
+      ...GRAPH_LABEL, x: x0 - 43, y: (num(ex.y0) + y1) / 2, ax: 0.5, rot: -Math.PI / 2,
+    });
     endText(v);
   },
   '6:guides': (v, ex) => {
@@ -698,7 +751,7 @@ const DECOR: Record<string, DecorPaint> = {
     for (const s of (ex.xs as { x: number; label: string }[]) ?? []) {
       dashed(g, s.x, num(ex.y0), s.x, num(ex.y1), 4, 4);
       g.stroke({ width: 1, color: COLORS.accent });
-      text(v, `g${s.label}`, s.label, { x: s.x, y: num(ex.y0) - 12, ax: 0.5, color: COLORS.accent });
+      text(v, `g${s.label}`, s.label, { ...GRAPH_TICK, x: s.x, y: num(ex.y0) + 3, ax: 0.5, color: COLORS.accent });
     }
     endText(v);
   },
@@ -754,14 +807,14 @@ const DECOR: Record<string, DecorPaint> = {
     beginText(v);
     const names = (ex.names as string[]) ?? [];
     const cw = num(ex.cellW);
-    const every = Math.max(1, Math.ceil(9 / cw));
+    const every = Math.max(1, Math.ceil(14 / cw));
     names.forEach((n, i) => {
       if (i % every) return;
       text(v, `c${i}`, n.length > 14 ? n.slice(0, 13) + '.' : n, {
         x: num(ex.x0) + (i + 0.5) * cw + 3,
         y: num(ex.y),
         rot: -Math.PI / 2.6,
-        size: 8,
+        size: 11,
         color: COLORS.ink,
       });
     });
@@ -770,7 +823,7 @@ const DECOR: Record<string, DecorPaint> = {
         v,
         'win',
         `showing columns ${num(ex.offset) + 1} to ${num(ex.offset) + names.length} of ${num(ex.total)}`,
-        { x: num(ex.x0) + 160, y: num(ex.infoY), size: 9, color: COLORS.grey },
+        { ...GRAPH_LABEL, x: num(ex.x0) + 160, y: num(ex.infoY) },
       );
     endText(v);
   },
@@ -792,7 +845,8 @@ const DECOR: Record<string, DecorPaint> = {
         g.moveTo(b, y)
           .lineTo(b, y + 6)
           .stroke({ width: 1, color: COLORS.grey });
-      if (b - a > 30) text(v, `b${k}`, gr.label, { x: a + 2, y: y - 12, size: 8, color: COLORS.grey });
+      if (b - a > Math.max(34, gr.label.length * 7))
+        text(v, `b${k}`, gr.label, { ...GRAPH_LABEL, x: a + 2, y: y - 17 });
     });
     endText(v);
   },
@@ -815,23 +869,23 @@ const DECOR: Record<string, DecorPaint> = {
       y: y + (r + 24) * Math.sin(ca),
       ax: ch < 0.4 ? 1 : ch > 0.6 ? 0 : 0.5,
       ay: 1,
-      size: 9,
-      color: COLORS.grey,
+      ...GRAPH_TICK,
     });
-    text(v, 'lab', str(ex.label), { x, y: y + 36, ax: 0.5, size: 9, color: COLORS.grey });
+    text(v, 'lab', str(ex.label), {
+      ...GRAPH_LABEL, x, y: y + 34, ax: 0.5, wrap: num(ex.labelWidth, 220), align: 'center',
+    });
     text(v, 'folds', `${num(ex.folds)}-fold stratified CV`, {
       x,
-      y: y + 50,
+      y: y + 64,
       ax: 0.5,
-      size: 9,
-      color: COLORS.grey,
+      ...GRAPH_LABEL,
     });
     const sc0 = v.state.needle as Scalar | undefined;
     v.state.valText = text(
       v,
       'val',
       `${((sc0?.x ?? num(ex.value)) * 100).toFixed(1)}% +- ${(num(ex.std) * 100).toFixed(1)}`,
-      { x, y: y + 12, ax: 0.5, size: 16 },
+      { ...GRAPH_TITLE, x, y: y + 10, ax: 0.5, size: 19 },
     );
     endText(v);
     const sc = (v.state.needle ??= new Scalar(num(ex.value), 'standard')) as Scalar;
@@ -861,13 +915,12 @@ const DECOR: Record<string, DecorPaint> = {
     const x0 = num(ex.x0);
     const x1 = num(ex.x1);
     const y0 = num(ex.y0);
-    text(v, 't', 'Leakage check', { x: x0, y: y0, font: 'serif', size: 14 });
+    text(v, 't', 'Leakage check', { ...GRAPH_TITLE, x: x0, y: y0 });
     if (ex.noLearned) {
       text(v, 'n', 'no learned steps selected: only the scaler could leak', {
         x: x0,
         y: y0 + 24,
-        size: 9,
-        color: COLORS.grey,
+        ...GRAPH_LABEL,
         wrap: x1 - x0,
       });
     }
@@ -880,8 +933,10 @@ const DECOR: Record<string, DecorPaint> = {
       rows.forEach(([lab, val], k) => {
         const y = y0 + 48 + k * 26;
         g.rect(x0 + 70, y, w * val, 14).fill({ color: k === 0 ? COLORS.teal : COLORS.amber });
-        text(v, `l${k}`, lab, { x: x0, y: y + 1, size: 10 });
-        text(v, `v${k}`, `${(val * 100).toFixed(1)}%`, { x: x0 + 74 + w * val, y: y + 1, size: 10 });
+        text(v, `l${k}`, lab, { ...GRAPH_LABEL, x: x0, y: y - 1 });
+        text(v, `v${k}`, `${(val * 100).toFixed(1)}%`, {
+          ...GRAPH_TICK, x: Math.min(x1, x0 + 124 + w * val), y: y - 1, ax: 1,
+        });
       });
       const gap = num(ex.gap);
       const xa = x0 + 70 + w * num(ex.correct);
@@ -895,14 +950,13 @@ const DECOR: Record<string, DecorPaint> = {
         v,
         'gap',
         `leaky fit changed accuracy by ${gap >= 0 ? '+' : '-'}${Math.abs(gap).toFixed(1)} points`,
-        { x: x0, y: y0 + 110, size: 10 },
+        { ...GRAPH_LABEL, x: x0, y: y0 + 110, wrap: x1 - x0 },
       );
     } else if (!ex.noLearned) {
       text(v, 'h', 'flip the leakage switch to compare correct and leaky fits', {
         x: x0,
         y: y0 + 24,
-        size: 9,
-        color: COLORS.grey,
+        ...GRAPH_LABEL,
         wrap: x1 - x0,
       });
     }
@@ -1083,6 +1137,9 @@ function paintViews(v: ContainerView, ex: Ex): void {
   });
   if (ex.tag) text(v, 'tag', str(ex.tag), { x: x1, y: y0 + 26, ax: 1, size: 9, color: COLORS.grey });
   if (ex.pre) text(v, 'pre', 'pre-selection matrix', { x: x0, y: y0 + 26, size: 9, color: COLORS.grey });
+  if (ex.traceLabel) {
+    text(v, 'trace', str(ex.traceLabel), { ...GRAPH_LABEL, x: x0, y: y1 + 10 });
+  }
   const sc = ex.scatter as { lo: [number, number]; hi: [number, number]; x: string; y: string } | null;
   const px0 = x0 + 20;
   const px1 = x1 - 20;
@@ -1090,15 +1147,18 @@ function paintViews(v: ContainerView, ex: Ex): void {
   const py1 = y1 - 20;
   if (sc) {
     g.rect(x0, my0, x1 - x0, y1 - my0).stroke({ width: 1, color: COLORS.hairline });
-    text(v, 'sx', sc.x, { x: (x0 + x1) / 2, y: y1 + 4, ax: 0.5, size: 9, color: COLORS.grey });
+    text(v, 'sx', sc.x, {
+      ...GRAPH_LABEL, x: (x0 + x1) / 2, y: y1 + 5, ax: 0.5, wrap: x1 - x0, align: 'center',
+    });
     text(v, 'sy', sc.y, {
       x: x0 - 4,
       y: (my0 + y1) / 2,
       ax: 0.5,
       ay: 1,
-      size: 9,
-      color: COLORS.grey,
+      ...GRAPH_LABEL,
       rot: -Math.PI / 2,
+      wrap: y1 - my0,
+      align: 'center',
     });
     const dec = ex.decision as {
       boundary: { w: [number, number]; b: number } | null;
@@ -1144,7 +1204,8 @@ function paintViews(v: ContainerView, ex: Ex): void {
         x: x1 - 4,
         y: my0 + 4,
         ax: 1,
-        size: 10,
+        ...GRAPH_LABEL,
+        wrap: x1 - x0 - 8,
       });
     }
   }
@@ -1160,11 +1221,10 @@ function paintViews(v: ContainerView, ex: Ex): void {
     text(v, 'cl', `|Pearson r|, top ${n} ranked features`, {
       x: x0 + 40,
       y: my0 + n * s + 6,
-      size: 9,
-      color: COLORS.grey,
+      ...GRAPH_LABEL,
     });
   }
-  const dist = ex.distribution as { name: string; values: number[]; labels: number[] } | null;
+  const dist = ex.distribution as { name: string; values: number[]; labels: number[]; classNames: string[] } | null;
   if (dist && dist.values.length) {
     const K = Math.max(...dist.labels) + 1;
     const lo = Math.min(...dist.values);
@@ -1176,6 +1236,9 @@ function paintViews(v: ContainerView, ex: Ex): void {
       if (!vals.length) continue;
       const yb = my0 + (k + 1) * bandH;
       const col = CLASS_COLORS[k % 6];
+      if (bandH >= 30) {
+        text(v, `class${k}`, dist.classNames[k], { ...GRAPH_LABEL, x: x0 + 6, y: yb - bandH + 2 });
+      }
       // histogram (20 bins)
       const nb = 20;
       const counts = new Array<number>(nb).fill(0);
@@ -1226,7 +1289,9 @@ function paintViews(v: ContainerView, ex: Ex): void {
         .lineTo(vx(vals[vals.length - 1]), by)
         .stroke({ width: 1, color: col });
     }
-    text(v, 'dn', dist.name, { x: x0 + 40, y: y1 + 2, size: 9, color: COLORS.grey });
+    text(v, 'dn', dist.name, {
+      ...GRAPH_LABEL, x: x0 + 40, y: y1 + 4, wrap: x1 - x0 - 40,
+    });
   }
   endText(v);
 }
@@ -1327,9 +1392,10 @@ function paintCard(v: ContainerView, ex: Ex): void {
     if (ex.units)
       text(v, 'units', `units: ${str(ex.units)}`, {
         x: x0 + 10,
-        y: y0 + h - 34,
-        size: 8,
-        color: COLORS.grey,
+        y: y0 + h - 40,
+        font: 'sans',
+        size: 11,
+        color: COLORS.ink,
         wrap: 100,
       });
   }
@@ -1750,30 +1816,24 @@ export function createPainters(): Painters {
         const x0 = num(ex.x0);
         const x1 = num(ex.x1);
         const y0 = num(ex.y0);
-        const bh = Math.min(16, (num(ex.y1) - y0 - 24) / Math.max(1, bars.size) - 3); // bar + 3 px gap fits
-        text(view, 't', 'Feature race (univariate separability, 0-1)', {
-          x: x0,
-          y: y0,
-          size: 10,
-          color: COLORS.grey,
-        });
+        const bh = Math.max(1, Math.min(16, (num(ex.y1) - y0 - 26) / Math.max(1, bars.size) - 3));
+        const labelStride = Math.max(1, Math.ceil(14 / (bh + 3)));
+        text(view, 't', 'Feature race · separability (0–1)', { ...GRAPH_LABEL, x: x0, y: y0 });
         let moving = false;
         let k = 0;
         for (const [name, s] of bars) {
           moving = s.step(dtMs) || moving;
-          const y = y0 + 20 + k * (bh + 3);
+          const y = y0 + 24 + k * (bh + 3);
           const w = (x1 - x0 - 120) * Math.max(0, Math.min(1, s.x));
           g.rect(x0 + 120, y, w, bh).fill({
             color: name === ex.xFeature ? COLORS.accent : COLORS.teal,
             alpha: 0.8,
           });
-          text(view, `n${k}`, name.length > 18 ? name.slice(0, 17) + '.' : name, {
-            x: x0 + 114,
-            y: y + bh / 2,
-            ax: 1,
-            ay: 0.5,
-            size: 8,
-          });
+          if (k % labelStride === 0) {
+            text(view, `n${k}`, name.length > 15 ? name.slice(0, 14) + '…' : name, {
+              ...GRAPH_LABEL, x: x0 + 114, y: y + bh / 2, ax: 1, ay: 0.5, size: 12,
+            });
+          }
           view.state[`bar:${k}`] = { x: x0, y, w: x1 - x0, h: bh, name };
           k++;
         }

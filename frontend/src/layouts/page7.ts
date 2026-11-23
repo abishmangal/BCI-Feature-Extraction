@@ -214,9 +214,9 @@ export function layout(c: LayoutCtx): Layout {
   const st = g.strip;
   m.set('wave:filtered', {
     x: (st.x0 + st.x1) / 2,
-    y: (st.y0 + st.y1) / 2,
+    y: (st.y0 + 17 + st.y1) / 2,
     w: st.x1 - st.x0,
-    h: st.y1 - st.y0,
+    h: st.y1 - st.y0 - 17,
     scaleX: 1,
     scaleY: 1,
     rotation: 0,
@@ -266,6 +266,7 @@ export function layout(c: LayoutCtx): Layout {
         value: ev.accuracy.mean,
         std: ev.accuracy.std,
         chance: ev.chance,
+        labelWidth: pw,
         label: c.settings.leakageGuard
           ? 'cross-validated accuracy (training folds only)'
           : 'cross-validated accuracy (leaky: all-data fit)',
@@ -303,6 +304,7 @@ export function layout(c: LayoutCtx): Layout {
         y0: g.vy0,
         y1: g.vy1,
         my0: g.my0,
+        traceLabel: hr === null ? null : `Filtered EEG · Trial ${hr + 1} · ${d.classNames[d.labels[hr]]}`,
         view,
         tabs: VIEW_TABS,
         scatter:
@@ -366,12 +368,12 @@ function groupRuns(fams: string[]): { start: number; end: number; label: string 
 function distributionData(
   c: LayoutCtx,
   col: number,
-): { name: string; values: number[]; labels: number[] } | null {
+): { name: string; values: number[]; labels: number[]; classNames: string[] } | null {
   const mi = matrixInfo(c);
   const d = c.data;
   if (!mi.values || !d) return null;
   const n = d.labels.length;
   const values: number[] = [];
   for (let t = 0; t < n; t++) values.push(mi.values[t * mi.nFeat + col]);
-  return { name: mi.names[col] ?? '', values, labels: Array.from(d.labels) };
+  return { name: mi.names[col] ?? '', values, labels: Array.from(d.labels), classNames: d.classNames };
 }

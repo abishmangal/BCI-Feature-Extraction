@@ -136,6 +136,9 @@ body,
 }
 .electrode-preview-axis {
   justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
 }
 .electrode-preview-legend {
   list-style: none;
@@ -153,6 +156,7 @@ body,
   background: transparent;
   color: inherit;
   font: inherit;
+  font-size: 13px;
   cursor: pointer;
 }
 .electrode-preview-legend button[aria-pressed='false'] {
@@ -600,6 +604,15 @@ a:focus-visible {
 }
 .scree {
   margin: 6px 0;
+}
+.scree svg {
+  display: block;
+  max-width: 100%;
+}
+.scree figcaption {
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
 }
 
 /* Lively colour accents (teal green and amber alongside the ink-blue accent). */

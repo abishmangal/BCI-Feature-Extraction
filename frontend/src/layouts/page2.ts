@@ -90,7 +90,7 @@ export function p2Geo(c: LayoutCtx): P2Geo {
       x0: plotX,
       y0: plotY,
       width: Math.max(1, w - plotX - PAD),
-      height: Math.max(1, h - plotY - 52),
+      height: Math.max(1, h - plotY - 59),
     },
     warped,
   };

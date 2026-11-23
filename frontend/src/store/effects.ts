@@ -106,6 +106,7 @@ export function fetchBand(debounce = 60): void {
         baseD: r.baseline ? decodeF32(r.baseline) : null,
         raw: decodeF32(r.example.raw),
         filt: decodeF32(r.example.filtered),
+        timesD: decodeF32(r.example.times),
       }),
   );
 }

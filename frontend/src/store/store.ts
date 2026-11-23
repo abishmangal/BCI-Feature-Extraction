@@ -150,6 +150,7 @@ export interface Results {
     baseD: Float32Array | null;
     raw: Float32Array;
     filt: Float32Array;
+    timesD?: Float32Array;
   };
   features?: FeaturesResponse;
   transform?: TransformResponse & { beforeD: Float32Array; afterD: Float32Array };

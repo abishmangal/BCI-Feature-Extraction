@@ -251,6 +251,7 @@ export function layout(c: LayoutCtx): Layout {
       name: res?.map.name ?? '',
       unit,
       note: res?.map.note ?? '',
+      labelWidth: W(c) - 64,
       vmin: res?.map.vmin ?? 0,
       vmax: res?.map.vmax ?? 1,
       ramp: rampFor(c),

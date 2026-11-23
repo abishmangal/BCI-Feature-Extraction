@@ -150,10 +150,11 @@ export function layout(c: LayoutCtx): Layout {
   const band = c.backendResults.band;
   const wv = g.wave;
   const wcx = (wv.x0 + wv.x1) / 2;
-  const wh = (wv.y1 - wv.y0) * 0.8;
+  const wh = Math.max(1, wv.y1 - wv.y0 - (wv.x1 - wv.x0 < 336 ? 66 : 46));
+  const waveY = wv.y1 - 20 - wh / 2;
   m.set('wave:raw', {
     x: wcx,
-    y: (wv.y0 + wv.y1) / 2 + 6,
+    y: waveY,
     w: wv.x1 - wv.x0,
     h: wh,
     scaleX: 1,
@@ -166,7 +167,7 @@ export function layout(c: LayoutCtx): Layout {
   });
   m.set('wave:filtered', {
     x: wcx,
-    y: (wv.y0 + wv.y1) / 2 + 6,
+    y: waveY,
     w: wv.x1 - wv.x0,
     h: wh,
     scaleX: 1,
@@ -198,7 +199,7 @@ export function layout(c: LayoutCtx): Layout {
       .filter((v) => v <= g.fmax)
       .map((v, j) => ({ x: g.fx(v), label: `${d.classNames[k]}${j ? ' 2f' : ''}` })),
   );
-  setDecor(m, 4, 'bands', { extra: { regions, stim, y0: g.y0, y1: g.y1 } });
+  setDecor(m, 4, 'bands', { extra: { regions, stim, x1: g.x1, y0: g.y0, y1: g.y1 } });
   const bx0 = g.fx(Math.max(1, c.settings.band.low));
   const bx1 = g.fx(Math.min(g.fmax, c.settings.band.high));
   setDecor(m, 4, 'gate', { extra: { x0: bx0, x1: bx1, y0: g.y0 - 10, y1: g.y1 } });
@@ -229,6 +230,7 @@ export function layout(c: LayoutCtx): Layout {
   }
   setDecor(m, 4, 'fill', { extra: { curves, ref } });
   const ex = band?.example;
+  const times = band?.timesD;
   setDecor(m, 4, 'wavepanel', {
     extra: {
       ...wv,
@@ -236,6 +238,7 @@ export function layout(c: LayoutCtx): Layout {
         ? `Trial ${ex.trial + 1} · ${ex.channel}`
         : 'Example waveform',
       note: 'Raw (grey) · Filtered (ink)',
+      times: times?.length ? [times[0], times[times.length - 1]] : undefined,
     },
   });
   setDecor(m, 4, 'prism', { alpha: 0, reveal: 0, extra: { x: g.prism.x, y: g.prism.y } });

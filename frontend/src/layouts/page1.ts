@@ -69,6 +69,13 @@ export function layout(c: LayoutCtx): Layout {
       });
     }
   }
-  setDecor(m, 1, 'droptext', { alpha: 0, extra: { text: '', x: 0, y: 0 } });
+  setDecor(m, 1, 'droptext', {
+    extra: {
+      plot: {
+        x0: st.x - st.w / 2, x1: st.x + st.w / 2, y0: st.y0, y1: st.y0 + st.h,
+        start: d.times[0], end: d.times[d.times.length - 1],
+      },
+    },
+  });
   return finish(m, c);
 }

@@ -1654,7 +1654,7 @@ function Scree({ evr, cum }: { evr: number[]; cum: number[] }) {
   const h = 70;
   return (
     <figure className="scree" aria-label="Scree plot">
-      <svg width={w} height={h + 14} role="img">
+      <svg width={w} height={h + 14} viewBox={`0 0 ${w} ${h + 14}`} role="img" aria-label="Explained variance by principal component">
         {evr.map((v, i) => (
           <rect
             key={i}
@@ -1671,9 +1671,10 @@ function Scree({ evr, cum }: { evr: number[]; cum: number[] }) {
           points={cum.map((v, i) => `${4 + ((i + 0.5) * (w - 8)) / cum.length},${h - v * h}`).join(' ')}
         />
       </svg>
-      <figcaption className="small mono">
-        explained variance {evr.map((v) => v.toFixed(2)).join(', ')}; cumulative{' '}
-        {cum[cum.length - 1]?.toFixed(2)} (exploratory only - all-data fit)
+      <figcaption>
+        <strong>Explained variance by component</strong>
+        <span>Bars {evr.map((v) => v.toFixed(2)).join(', ')}</span>
+        <span>Cumulative line {cum[cum.length - 1]?.toFixed(2)} (exploratory, all-data fit)</span>
       </figcaption>
     </figure>
   );
