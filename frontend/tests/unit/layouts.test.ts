@@ -187,6 +187,7 @@ it('aligns the frequency controls with their plots and leaves a gap between the 
 it('keeps matrix tabs and the feature race inside their respective regions', () => {
   const ctx = ctxFor(null, {}, 7);
   const wide = p7Geo(ctx);
+  expect(wide.vx1 - wide.vx0).toBeGreaterThan(2.5 * (wide.px1 - wide.px0));
   expect(wide.px0).toBeGreaterThan(wide.vx1);
   expect(wide.raceTop + RACE_HEADER_HEIGHT + 14 * (raceBarHeight(wide, 14) + 3))
     .toBeLessThanOrEqual(wide.raceBottom);

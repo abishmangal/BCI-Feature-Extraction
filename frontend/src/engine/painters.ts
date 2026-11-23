@@ -1128,8 +1128,11 @@ function paintViews(v: ContainerView, ex: Ex): void {
   const x0 = num(ex.x0);
   const x1 = num(ex.x1);
   const infoY = num(ex.infoY);
+  const viewTop = num(ex.y0);
   const y1 = num(ex.y1);
   const my0 = num(ex.my0);
+  g.roundRect(x0 - 15, viewTop - 12, x1 - x0 + 27, y1 - viewTop + 16, 8)
+    .stroke({ width: 1.5, color: COLORS.teal, alpha: 0.6 });
   // Tab strip (part of the stage; keyboard access through the accessibility overlay).
   const tabs = (ex.tabs as { id: string; label: string; x: number; y: number; w: number }[]) ?? [];
   tabs.forEach((t) => {

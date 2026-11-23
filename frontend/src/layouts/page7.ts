@@ -39,7 +39,8 @@ export function p7Geo(c: LayoutCtx): P7Geo {
   const h = H(c);
   const wide = w >= 760;
   const vx0 = PAD + 18;
-  const vx1 = wide ? Math.round(w * 0.62) : w - PAD;
+  const metricsWidth = Math.min(344, Math.max(224, Math.round(w * 0.23)));
+  const vx1 = w - PAD - (wide ? metricsWidth + 24 : 0);
   const metricsTop = wide ? 12 : Math.max(460, h - 610);
   const metricsBottom = h - 10;
   const vy0 = 40;
