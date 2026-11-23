@@ -923,10 +923,20 @@ a:focus-visible {
   flex-direction: column;
   overflow: auto;
 }
+.load-intro,
 .load-content {
   width: min(100%, 1120px);
   margin-inline: auto;
   padding: 16px clamp(16px, 3vw, 32px) 0;
+}
+.load-content {
+  flex: none;
+  order: -1;
+  padding-top: 0;
+}
+.load-intro {
+  flex: none;
+  order: -2;
 }
 .load-intro .page-header,
 .load-intro .badge-wrap {
@@ -979,25 +989,34 @@ a:focus-visible {
   min-height: 230px;
 }
 .dataset-cards {
-  flex: none;
   justify-content: flex-start;
-  padding: 12px 16px 16px;
+  padding: 12px 0 16px;
 }
-@media (min-width: 900px) {
-  .load-workspace:has(> .dataset-cards) {
+.load-ready > .load-content {
+  order: 0;
+}
+.load-ready > .stage-host {
+  min-height: 330px;
+}
+@media (min-width: 1000px) {
+  .load-ready {
     display: grid;
-    grid-template: "upload upload" auto "stage cards" minmax(330px, 1fr)
-      / minmax(0, 1fr) clamp(280px, 25vw, 360px);
+    grid-template: "intro cards" auto "stage cards" minmax(380px, 1fr)
+      / minmax(0, 1fr) clamp(320px, 27vw, 400px);
   }
-  .load-workspace:has(> .dataset-cards) > .load-content {
-    grid-area: upload;
+  .load-ready > .load-intro {
+    grid-area: intro;
+    width: 100%;
   }
-  .load-workspace:has(> .dataset-cards) > .stage-host {
+  .load-ready > .stage-host {
     grid-area: stage;
   }
-  .dataset-cards {
+  .load-ready > .load-content {
     grid-area: cards;
-    overflow: auto;
+    padding: 4px 16px 0 0;
+  }
+  .load-ready .load-tools {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 680px) {

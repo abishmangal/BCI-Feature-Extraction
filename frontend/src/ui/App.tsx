@@ -1,4 +1,4 @@
-import { Profiler, useEffect } from 'react';
+import { Profiler, useEffect, useLayoutEffect, useRef } from 'react';
 import * as RTooltip from '@radix-ui/react-tooltip';
 import { PageHeader, ShapeBadge, TopBar } from './Shell';
 import { StageHost } from './StageHost';
@@ -44,6 +44,52 @@ function useRouting(): void {
   }, []);
 }
 
+function LoadSidebar({ loaded }: { loaded: boolean }) {
+  const column = useRef<HTMLDivElement>(null);
+  const previous = useRef(new Map<Element, DOMRect>());
+  const reduceMotion = useStore((s) => s.ui.reduceMotion);
+
+  useLayoutEffect(() => {
+    const cards = Array.from(column.current!.querySelectorAll('.load-tools > .psec, .dataset-cards > .psec'));
+    const measure = () => new Map(cards.map((card) => [card, card.getBoundingClientRect()]));
+    const current = measure();
+    const animations: Animation[] = [];
+    if (loaded && previous.current.size && !reduceMotion && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      for (const [card, to] of current) {
+        const from = previous.current.get(card);
+        const frames = from
+          ? [{ transform: `translate(${from.x - to.x}px, ${from.y - to.y}px)` }, { transform: 'none' }]
+          : [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }];
+        if (!from || from.x !== to.x || from.y !== to.y) {
+          animations.push(card.animate(frames, { duration: 450, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }));
+        }
+      }
+    }
+    previous.current = current;
+
+    if (!loaded) {
+      const refresh = () => { previous.current = measure(); };
+      const observer = new ResizeObserver(refresh);
+      observer.observe(column.current!);
+      for (const card of cards) observer.observe(card);
+      const workspace = column.current!.parentElement!;
+      workspace.addEventListener('scroll', refresh);
+      return () => {
+        observer.disconnect();
+        workspace.removeEventListener('scroll', refresh);
+      };
+    }
+    return () => animations.forEach((animation) => animation.cancel());
+  }, [loaded, reduceMotion]);
+
+  return (
+    <div className="load-content" ref={column}>
+      <LoadControls />
+      <DatasetCards />
+    </div>
+  );
+}
+
 /** React commit counter (Profiler): used to verify React does not re-render per frame. */
 export const commits = { n: 0 };
 
@@ -57,6 +103,7 @@ export function App() {
     if (s.page === 6) return 'transform';
     return null;
   });
+  const loaded = useStore((s) => s.page === 1 && !!s.data);
   useEffect(() => {
     void startApp();
   }, []);
@@ -65,7 +112,7 @@ export function App() {
       <RTooltip.Provider delayDuration={200}>
         <div className="app">
           <TopBar />
-          <main className={`main${workspace ? ` ${workspace}-workspace` : ''}`}>
+          <main className={`main${workspace ? ` ${workspace}-workspace` : ''}${loaded ? ' load-ready' : ''}`}>
             {workspace === 'matrix' ? (
               <div className="matrix-top">
                 <div className="matrix-intro">
@@ -76,16 +123,13 @@ export function App() {
               </div>
             ) : null}
             {workspace === 'load' ? (
-              <div className="load-content">
-                <div className="load-intro">
-                  <PageHeader />
-                  <ShapeBadge />
-                </div>
-                <LoadControls />
+              <div className="load-intro">
+                <PageHeader />
+                <ShapeBadge />
               </div>
             ) : null}
             <StageHost />
-            {workspace === 'load' ? <DatasetCards /> : null}
+            {workspace === 'load' ? <LoadSidebar loaded={loaded} /> : null}
             {workspace === 'channels' ? <ChannelsControls /> : workspace === 'transform' ? <TransformControls /> : <ControlsPanel />}
           </main>
         </div>
