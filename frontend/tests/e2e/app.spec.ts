@@ -245,12 +245,16 @@ test('feature cards: scrolling, searching and filtering', async ({ page }) => {
   expect(await vis('csp')).toBe(false);
   await page.getByTestId('card-search').fill('');
   await settle(page);
-  // All 12 cards fit by default; hovering a card expands it (with its settings pane), which pushes the
-  // flow onto an extra row, so the grid becomes scrollable.
   const box = (await page.getByTestId('card-hjorth').boundingBox())!;
+  expect(box.width).toBeLessThanOrEqual(250);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.getByTestId('card-pane')).toBeVisible();
   await settle(page);
+  await page.getByTestId('card-pane').locator('summary').click();
+  await expect(page.getByTestId('card-pane').locator('math msqrt')).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 640 });
+  await settle(page);
+  await page.mouse.move(10, 300);
   await page.mouse.wheel(0, 400);
   await page.waitForTimeout(500);
   expect(

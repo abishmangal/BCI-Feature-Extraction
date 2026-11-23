@@ -1166,6 +1166,13 @@ a:focus-visible {
   font-size: 12px;
   padding-right: 4px;
 }
+.card-pane-floating {
+  padding: 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
 .card-pane-inner .field {
   margin: 3px 0;
 }
@@ -1181,6 +1188,23 @@ a:focus-visible {
   font-weight: 400;
   font-size: 14px;
   color: var(--teal-dark);
+}
+.equations {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin: 6px 0;
+  max-width: 100%;
+  overflow-x: auto;
+  color: var(--ink);
+}
+.equations math {
+  font-size: 1rem;
+  text-align: left;
+}
+.equations p {
+  margin: 0;
+  color: var(--grey);
 }
 .card-toolbar .readout {
   margin-left: 8px;

@@ -25,8 +25,9 @@ import { decodeF32 } from '../api/f32';
 import { Field, Info, Msg, MultiToggle, NumberInput, Select, Switch, Toggle } from './controls';
 import { CLASS_HEX } from '../engine/colors';
 import { engine } from '../engine/wiring';
-import { TITLES } from '../layouts/page5';
+import { formatFeatureUnit, TITLES } from '../layouts/page5';
 import { Basket } from './Basket';
+import { FeatureEquations, FisherEquation, SignedLogEquation } from './Equations';
 import { Scalar } from '../engine/scalar';
 import { NAMED, p4Geo } from '../layouts/page4';
 import { epochSpan, freqMax, RAIL_H } from '../layouts/common';
@@ -1359,9 +1360,9 @@ export const CardPane = memo(function CardPane({ f }: { f: FamilyId }) {
       {selMeta && !selMeta.error ? (
         <details className="small">
           <summary>
-            {selMeta.count} features, units {Array.from(new Set(selMeta.units)).join(', ')}; formula
+            {selMeta.count} features, units {Array.from(new Set(selMeta.units.map(formatFeatureUnit))).join(', ')}; formula
           </summary>
-          <p className="mono">{selMeta.formula}</p>
+          <FeatureEquations family={f} />
           <p>interval: {selMeta.interval}</p>
           {selMeta.droppedSamples ? (
             <p>dropped samples in the last partial bin: {selMeta.droppedSamples}</p>
@@ -1414,7 +1415,7 @@ export const TransformControls = memo(function TransformControls() {
           ]}
           onChange={(v) => updateSettings({ transform: v as Settings['transform'] })}
         />
-        <p className="small">signed log = sign(x) times log1p of abs(x)</p>
+        <SignedLogEquation />
         {s.transform === 'log' && tr ? (
           <p className="note">log skipped for {tr.logSkipped} non-positive columns</p>
         ) : null}
@@ -1605,7 +1606,7 @@ export const MatrixControls = memo(function MatrixControls() {
             onCommit={(v) => setSel({ ranking: { ...ss.ranking, topK: Math.max(1, Math.round(v)) } })}
           />
         </div>
-        <p className="small mono">F = sum_k n_k (mean_k - mean)^2 / (sum_k n_k var_k + eps)</p>
+        <FisherEquation />
         <Field label="4. Projection">
           <Select
             label="Projection"

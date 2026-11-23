@@ -542,6 +542,19 @@ function CardPaneOverlay({ f }: { f: FamilyId }) {
     const write = (): void => {
       const r = cardRect(f);
       const g = p5Geo(buildCtx());
+      el.classList.toggle('card-pane-floating', g.floatingPane);
+      if (g.floatingPane) {
+        const bottom = g.gy0 + g.gh;
+        const height = Math.min(240, g.gh);
+        const below = r.y + r.h + 6;
+        const above = r.y - height - 6;
+        const y = below + height <= bottom ? below : Math.max(g.gy0, above);
+        el.style.transform = `translate(${g.gx0}px, ${y}px)`;
+        el.style.width = `${Math.min(g.gw, 320)}px`;
+        el.style.height = `${height}px`;
+        el.style.opacity = r.visible ? '1' : '0';
+        return;
+      }
       const x0 = g.paneLeft ? r.x + 8 : r.x + 204 * g.s + 6;
       const w = g.paneLeft ? r.w - 204 * g.s - 14 : r.x + r.w - 8 - x0;
       el.style.transform = `translate(${Math.round(x0)}px, ${Math.round(r.y + 10)}px)`;
@@ -564,6 +577,7 @@ function CardPaneOverlay({ f }: { f: FamilyId }) {
       data-testid="card-pane"
       onPointerEnter={() => hoverCard(f, true)}
       onPointerLeave={() => hoverCard(f, false)}
+      onWheel={(e) => e.stopPropagation()}
     >
       <CardPane f={f} />
     </div>

@@ -4,6 +4,7 @@ import p3 from '../../public/fallback/erp_p300.json';
 import ss from '../../public/fallback/ssvep.json';
 import { layoutFor, helpersFor, tablesFor } from '../../src/layouts';
 import { p4Geo } from '../../src/layouts/page4';
+import { CARD_W, p5Geo } from '../../src/layouts/page5';
 import { p7Geo, raceBarHeight, RACE_HEADER_HEIGHT } from '../../src/layouts/page7';
 import { REG, ticks, tickStep, windowSnap, minWindow, type LayoutCtx } from '../../src/layouts/common';
 import { decodeDataset, defaultSettings, emptyPreset, selectChannelGroup, type Data, type Results } from '../../src/store/store';
@@ -182,6 +183,19 @@ it('aligns the frequency controls with their plots and leaves a gap between the 
   expect(controlRects.example.height).toBeCloseTo(wave.y1 - wave.y0);
   expect(controlRects.example.height).toBeCloseTo(141.792);
   expect(wave.y0).toBeGreaterThan(y1);
+});
+
+it('fits six compact feature cards on a wide stage and reserves room for their settings', () => {
+  const ctx = ctxFor(null, {}, 5);
+  const desktop = { ...ctx, stageSize: { width: 1534, height: 900, stageHeight: 844 } };
+  const g = p5Geo(desktop);
+  expect(g.slotOf(5).y).toBe(g.slotOf(0).y);
+  expect(g.slotOf(6).y).toBeGreaterThan(g.slotOf(0).y);
+  expect(g.s * CARD_W).toBeLessThanOrEqual(250);
+  const expanded = p5Geo({ ...desktop, ui: { ...desktop.ui, expandFamily: g.visible[5] } });
+  expect(expanded.widthOf(5) * expanded.s).toBeGreaterThan(CARD_W * expanded.s + 200);
+  const narrow = p5Geo({ ...ctx, stageSize: { width: 360, height: 680, stageHeight: 624 } });
+  expect(narrow.floatingPane).toBe(true);
 });
 
 it('keeps matrix tabs and the feature race inside their respective regions', () => {

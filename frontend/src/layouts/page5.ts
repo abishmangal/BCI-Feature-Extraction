@@ -1,4 +1,4 @@
-// Page 5: Choose features. 12 family cards in a clipped, scrollable 3-column grid, plus the feature basket.
+// Page 5: Choose features. Family cards in a compact, scrollable grid, plus the feature basket.
 import type { Layout } from '../engine/types';
 import { COLORS } from '../engine/colors';
 import { FAMILY_IDS, type FamilyId } from '../engine/registry';
@@ -37,14 +37,16 @@ export const TITLES: Record<FamilyId, string> = {
 export const CARD_W = 200;
 export const CARD_H = 170;
 export const GAP = 16;
+export const formatFeatureUnit = (unit: string): string => unit.replaceAll('uV^2', 'µV²').replaceAll('uV', 'µV');
 
 export interface P5Geo {
   gx0: number;
   gy0: number;
   gw: number;
   gh: number;
-  /** Uniform card scale (cards are designed at 200 x 170 and grow to fill the free area). */
+  /** Uniform scale of the 200 x 170 card design. */
   s: number;
+  floatingPane: boolean;
   basket: { x: number; y: number; w: number; h: number };
   /** visible (matching, unselected) families in grid order */
   visible: FamilyId[];
@@ -101,25 +103,26 @@ export const SHRINK = 0.6;
 export function p5Geo(c: LayoutCtx): P5Geo {
   const gx0 = PAD;
   const gy0 = TOP + 44;
-  const cols = 3; // always three feature cards per row
   const gw = W(c) - 2 * PAD;
   const gh = H(c) - gy0 - 12;
-  // Cards are as large as the width allows (equal sizes); the grid scrolls vertically.
-  const sc = Math.max(0.8, (gw - (cols - 1) * GAP) / (cols * CARD_W));
+  const cols = Math.max(1, Math.min(6, Math.floor((gw + GAP) / (0.9 * CARD_W + GAP))));
+  const sc = Math.min(1.25, (gw - (cols - 1) * GAP) / (cols * CARD_W));
+  const floatingPane = cols < 3;
   const visible = FAMILY_IDS.filter((f) => matches(c, f) && !c.settings.features.includes(f));
   const ex = c.ui.expandFamily as FamilyId | null;
   const expanded = ex && visible.includes(ex) ? ex : null;
   const ek = expanded ? visible.indexOf(expanded) : -1;
-  const expRow = ek >= 0 ? Math.floor(ek / cols) : -1;
+  const expRow = ek >= 0 && !floatingPane ? Math.floor(ek / cols) : -1;
   const rowW = cols * CARD_W * sc + (cols - 1) * GAP;
+  const maxPaneWidth = Math.max(340, (cols - 1) * CARD_W * sc * (1 - SHRINK));
   const nInRow = (r: number): number => Math.min(cols, visible.length - r * cols);
   // In the expanded card's row the other cards shrink (uniformly) and the expanded card takes the rest.
   const scaleOf = (k: number): number => (Math.floor(k / cols) === expRow && k !== ek ? sc * SHRINK : sc);
   const widthOf = (k: number): number => {
-    if (k !== ek) return CARD_W;
+    if (k !== ek || floatingPane) return CARD_W;
     const others = nInRow(expRow) - 1;
     const px = rowW - others * (CARD_W * sc * SHRINK + GAP);
-    return Math.max(CARD_W, px / sc);
+    return Math.min(CARD_W + maxPaneWidth / sc, Math.max(CARD_W, px / sc));
   };
   const pos: { x: number; y: number }[] = [];
   for (let k = 0; k < visible.length; k++) {
@@ -145,6 +148,7 @@ export function p5Geo(c: LayoutCtx): P5Geo {
     gw,
     gh,
     s: sc,
+    floatingPane,
     // where the basket lands on the stage after floating out of the sidebar (5 -> 6 spill origin)
     basket: flipRect(c),
     visible,
@@ -199,7 +203,7 @@ export function layout(c: LayoutCtx): Layout {
         explanation: meta?.explanation ?? '',
         count: meta?.error ? null : (meta?.count ?? null),
         error: meta?.error ?? null,
-        units: meta?.units ? Array.from(new Set(meta.units)).join(', ') : '',
+        units: meta?.units ? Array.from(new Set(meta.units.map(formatFeatureUnit))).join(', ') : '',
         preview: meta?.preview ?? null,
         recommended: rec.has(f) ? `recommended for ${c.paradigm.name}` : null,
         category: CATEGORY[f],
