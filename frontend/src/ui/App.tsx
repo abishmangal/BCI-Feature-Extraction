@@ -57,12 +57,25 @@ function LoadSidebar({ loaded }: { loaded: boolean }) {
     if (loaded && previous.current.size && !reduceMotion && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       for (const [card, to] of current) {
         const from = previous.current.get(card);
-        const frames = from
-          ? [{ transform: `translate(${from.x - to.x}px, ${from.y - to.y}px)` }, { transform: 'none' }]
-          : [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }];
-        if (!from || from.x !== to.x || from.y !== to.y) {
-          animations.push(card.animate(frames, { duration: 450, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }));
-        }
+        if (from && from.x === to.x && from.y === to.y &&
+            from.width === to.width && from.height === to.height) continue;
+
+        const frames: Keyframe[] = from && to.width > 0 && to.height > 0
+          ? [
+              {
+                transformOrigin: 'top left',
+                transform: `translate(${from.x - to.x}px, ${from.y - to.y}px) scale(${from.width / to.width}, ${from.height / to.height})`,
+              },
+              { transformOrigin: 'top left', transform: 'none' },
+            ]
+          : [
+              { opacity: 0, transform: 'translateY(12px)' },
+              { opacity: 1, transform: 'none' },
+            ];
+        animations.push(card.animate(frames, {
+          duration: 650,
+          easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+        }));
       }
     }
     previous.current = current;

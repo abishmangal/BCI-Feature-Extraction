@@ -165,7 +165,7 @@ export const LoadControls = memo(function LoadControls() {
               aria-label="Sampling rate"
             />
           </Field>
-          <Field label="Time of first sample relative to the event, tmin (s)">
+          <Field label="Epoch start, tmin (s)">
             <input
               className="num"
               value={form.tmin}
@@ -225,7 +225,7 @@ export const DatasetCards = memo(function DatasetCards() {
   return (
     <div className="workspace-tools dataset-cards">
       <Section title="Dataset">
-        <dl className="kv" data-testid="summary">
+        <dl className="kv dataset-summary" data-testid="summary">
           <dt>trials</dt>
           <dd>{data.shape[0]}</dd>
           <dt>channels</dt>
