@@ -464,8 +464,8 @@ function toggleCard(f: FamilyId): void {
   updateUi({ focusFamily: f });
 }
 
-/** Screen rect of a card piece. Grid cards are anchored on their 200-wide base area and widen rightwards. */
-function cardRect(f: FamilyId): Rect {
+/** Screen rect of a card piece, anchored on its base area as the settings pane opens. */
+function cardRect(f: FamilyId, g: ReturnType<typeof p5Geo>): Rect {
   const p = poseOf(`card:${f}`);
   if (!p) return { x: 0, y: 0, w: 0, h: 0, visible: false };
   const sx = Math.abs(p.sx);
@@ -473,8 +473,9 @@ function cardRect(f: FamilyId): Rect {
   const chip = get().settings.features.includes(f);
   const w = p.w * sx;
   const h = p.h * sy;
-  const paneLeft = !chip && get().ui.expandFamily === f && p5Geo(buildCtx()).paneLeft;
-  const x = chip ? p.x - w / 2 : paneLeft ? p.x + 100 * sx - w : p.x - 100 * sx;
+  const paneLeft = !chip && get().ui.expandFamily === f && g.paneLeft;
+  const halfBase = (g.baseWidth * sx) / 2;
+  const x = chip ? p.x - w / 2 : paneLeft ? p.x + halfBase - w : p.x - halfBase;
   return { x, y: p.y - h / 2, w, h, visible: p.alpha > 0.05 && w > 1 && h > 1 };
 }
 
@@ -512,13 +513,13 @@ function CardOverlay() {
           id={`card:${f}`}
           testid={`card-${f}`}
           pos={() => {
-            const r = cardRect(f);
             const g = p5Geo(buildCtx());
+            const r = cardRect(f, g);
             const inGrid = r.y + r.h > g.gy0 && r.y < g.gy0 + g.gh;
             const inBasket = r.x > g.basket.x - 10;
             // an expanded card's button covers only its base area; the settings pane covers the rest
             const exp = f === expanded && !get().settings.features.includes(f);
-            const w = exp ? Math.min(r.w, 200 * g.s) : r.w;
+            const w = exp ? Math.min(r.w, g.baseWidth * g.s) : r.w;
             const x = exp && g.paneLeft ? r.x + r.w - w : r.x;
             return { ...r, x, w, visible: r.visible && (inGrid || inBasket) };
           }}
@@ -540,8 +541,8 @@ function CardPaneOverlay({ f }: { f: FamilyId }) {
     const el = ref.current;
     if (!el) return;
     const write = (): void => {
-      const r = cardRect(f);
       const g = p5Geo(buildCtx());
+      const r = cardRect(f, g);
       el.classList.toggle('card-pane-floating', g.floatingPane);
       if (g.floatingPane) {
         const bottom = g.gy0 + g.gh;
@@ -555,8 +556,9 @@ function CardPaneOverlay({ f }: { f: FamilyId }) {
         el.style.opacity = r.visible ? '1' : '0';
         return;
       }
-      const x0 = g.paneLeft ? r.x + 8 : r.x + 204 * g.s + 6;
-      const w = g.paneLeft ? r.w - 204 * g.s - 14 : r.x + r.w - 8 - x0;
+      const divider = (g.baseWidth + 4) * g.s;
+      const x0 = g.paneLeft ? r.x + 8 : r.x + divider + 6;
+      const w = g.paneLeft ? r.w - divider - 14 : r.x + r.w - 8 - x0;
       el.style.transform = `translate(${Math.round(x0)}px, ${Math.round(r.y + 10)}px)`;
       el.style.width = `${Math.max(0, Math.round(w))}px`;
       el.style.height = `${Math.max(0, Math.round(r.h - 20))}px`;
@@ -912,7 +914,7 @@ export function StageHost() {
     const s = get();
     if (s.page === 5) {
       const max = maxScroll(buildCtx());
-      updateUi({ scrollY: Math.max(0, Math.min(max, s.ui.scrollY + e.deltaY)) });
+      updateUi({ scrollY: Math.max(0, Math.min(max, Math.min(max, s.ui.scrollY) + e.deltaY)) });
     }
   };
   const onDrop = (e: React.DragEvent): void => {

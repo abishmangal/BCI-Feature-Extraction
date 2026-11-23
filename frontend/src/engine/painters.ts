@@ -1359,6 +1359,10 @@ function paintCard(v: ContainerView, ex: Ex): void {
   v.state.chipMode = !!ex.selected;
   v.state.expanded = !!ex.expanded;
   v.state.paneLeft = !!ex.paneLeft;
+  const w = num(ex.baseWidth, 200);
+  const h = num(ex.baseHeight, 170);
+  v.state.baseWidth = w;
+  v.state.baseHeight = h;
   paintCardFrame(v);
   if (ex.selected) {
     // In the basket the card becomes a readable chip (drawn at 2x, shown at scale 0.5).
@@ -1368,11 +1372,9 @@ function paintCard(v: ContainerView, ex: Ex): void {
     endText(v);
     return;
   }
-  const w = 200;
-  const h = 170;
   const x0 = -w / 2;
   const y0 = -h / 2;
-  const tt = text(v, 'title', str(ex.title), { x: x0 + 10, y: y0 + 8, font: 'serif', size: 13, wrap: 180 });
+  const tt = text(v, 'title', str(ex.title), { x: x0 + 10, y: y0 + 8, font: 'serif', size: 13, wrap: w - 20 });
   const ty = y0 + 8 + Math.max(16, tt.height) + 2;
   text(v, 'cat', str(ex.category), {
     x: x0 + w - 10,
@@ -1392,11 +1394,11 @@ function paintCard(v: ContainerView, ex: Ex): void {
     font: 'sans',
     size: 9,
     color: COLORS.grey,
-    wrap: 180,
+    wrap: w - 20,
   });
   const err = ex.error as string | null;
   if (err) {
-    text(v, 'err', err, { x: x0 + 10, y: y0 + 64, size: 8, color: COLORS.ink, wrap: 180 });
+    text(v, 'err', err, { x: x0 + 10, y: y0 + 64, size: 8, color: COLORS.ink, wrap: w - 20 });
   } else {
     const cnt = ex.count as number | null;
     const badge = cnt === null ? '... features' : `${cnt} features`;
@@ -1409,7 +1411,7 @@ function paintCard(v: ContainerView, ex: Ex): void {
         font: 'sans',
         size: 11,
         color: COLORS.ink,
-        wrap: 100,
+        wrap: Math.max(60, w - 104),
       });
   }
   v.state.preview = ex.preview ?? null;
@@ -1427,15 +1429,18 @@ function paintCardFrame(v: ContainerView): void {
     bg.roundRect(-250, -32, 500, 64, 32).fill({ color: 0xffffff }).stroke({ width: 3, color: cat });
     return;
   }
-  const w = Math.max(200, num(v.state.w, 200));
-  const left = v.state.paneLeft ? 100 - w : -100; // the pane side grows left for last-column cards
-  bg.roundRect(left, -85, w, 170, 8)
+  const baseWidth = num(v.state.baseWidth, 200);
+  const baseHeight = num(v.state.baseHeight, 170);
+  const w = Math.max(baseWidth, num(v.state.w, baseWidth));
+  const h = Math.max(baseHeight, num(v.state.h, baseHeight));
+  const left = v.state.paneLeft ? baseWidth / 2 - w : -baseWidth / 2;
+  bg.roundRect(left, -h / 2, w, h, 8)
     .fill({ color: COLORS.panel })
     .stroke({ width: v.state.expanded ? 2 : 1, color: v.state.expanded ? cat : COLORS.hairline });
-  bg.roundRect(left, -85, w, 5, 2).fill({ color: cat });
-  if (w > 210) {
-    const sx = v.state.paneLeft ? -104 : 104;
-    bg.moveTo(sx, -72).lineTo(sx, 72).stroke({ width: 1, color: COLORS.hairline });
+  bg.roundRect(left, -h / 2, w, 5, 2).fill({ color: cat });
+  if (w > baseWidth + 10) {
+    const sx = (v.state.paneLeft ? -1 : 1) * (baseWidth / 2 + 4);
+    bg.moveTo(sx, -h / 2 + 13).lineTo(sx, h / 2 - 13).stroke({ width: 1, color: COLORS.hairline });
   }
 }
 
@@ -1444,10 +1449,10 @@ function drawPreview(v: ContainerView, dtMs: number): boolean {
   const pg = v.state.pv as Graphics | undefined;
   if (!pg || !pv) return false;
   pg.clear();
-  const x0 = -90;
-  const y0 = -22;
-  const w = 180;
-  const h = 46;
+  const w = num(v.state.baseWidth, 200) - 20;
+  const x0 = -w / 2;
+  const h = Math.min(86, 46 + Math.max(0, num(v.state.baseHeight, 170) - 170) * 0.55);
+  const y0 = 1 - h / 2;
   const time = ((v.state.time as number | undefined) ?? 0) + dtMs;
   v.state.time = time;
   const K = num(v.state.nClasses, 2);
@@ -1459,7 +1464,7 @@ function drawPreview(v: ContainerView, dtMs: number): boolean {
       const s = (v.state.lvl ??= new Scalar(lv[0] ?? 0, 'soft')) as Scalar;
       s.t = lv[cls] ?? 0;
       s.step(dtMs);
-      const gx = x0 + 70;
+      const gx = -20;
       pg.rect(gx, y0, 40, h).stroke({ width: 1.2, color: COLORS.ink });
       const fh = h * Math.max(0, Math.min(1, s.x));
       pg.rect(gx + 1, y0 + h - fh, 38, fh).fill({ color: CLASS_COLORS[cls % 6], alpha: 0.6 });
@@ -1482,8 +1487,8 @@ function drawPreview(v: ContainerView, dtMs: number): boolean {
           const ex = e.rx * 20 * Math.cos(t);
           const ey = e.ry * 20 * Math.sin(t);
           pts.push(
-            x0 + 90 + ex * Math.cos(a) - ey * Math.sin(a),
-            y0 + 23 + ex * Math.sin(a) + ey * Math.cos(a),
+            ex * Math.cos(a) - ey * Math.sin(a),
+            y0 + h / 2 + ex * Math.sin(a) + ey * Math.cos(a),
           );
         }
         pg.poly(pts).stroke({ width: 1.2, color: col });
@@ -1496,8 +1501,8 @@ function drawPreview(v: ContainerView, dtMs: number): boolean {
       const mx = (pv.max as number[]) ?? [];
       const lg = (pv.log as boolean[]) ?? [];
       for (let k = 0; k < 3; k++) {
-        const cx = x0 + 30 + k * 60;
-        const cy = y0 + 40;
+        const cx = x0 + ((k + 0.5) * w) / 3;
+        const cy = y0 + h - 6;
         pg.arc(cx, cy, 22, Math.PI, 2 * Math.PI).stroke({ width: 3, color: COLORS.hairline });
         const f = lg[k]
           ? (Math.log(mean[k]) - Math.log(mn[k] || 1e-9)) /
@@ -1539,7 +1544,7 @@ function drawPreview(v: ContainerView, dtMs: number): boolean {
       const s = Math.min(h / n, 6);
       for (let i = 0; i < n; i++)
         for (let j = 0; j < n; j++)
-          pg.rect(x0 + 60 + j * s, y0 + i * s, s - 0.5, s - 0.5).fill({
+          pg.rect((j - n / 2) * s, y0 + i * s, s - 0.5, s - 0.5).fill({
             color: mix(COLORS.cream, COLORS.accent, Math.abs(M[i][j]) / (mx || 1)),
           });
       moving = false;
@@ -1577,11 +1582,11 @@ function drawPreview(v: ContainerView, dtMs: number): boolean {
       if (pc) {
         const mx = Math.max(...pc.flatMap((p) => [p.left, p.right]), 1e-12);
         const p = pc[cls % pc.length];
-        pg.rect(x0 + 50, y0 + h - (p.left / mx) * h, 30, (p.left / mx) * h).fill({
+        pg.rect(-40, y0 + h - (p.left / mx) * h, 30, (p.left / mx) * h).fill({
           color: CLASS_COLORS[cls % 6],
           alpha: 0.7,
         });
-        pg.rect(x0 + 100, y0 + h - (p.right / mx) * h, 30, (p.right / mx) * h).fill({
+        pg.rect(10, y0 + h - (p.right / mx) * h, 30, (p.right / mx) * h).fill({
           color: CLASS_COLORS[cls % 6],
           alpha: 0.35,
         });
@@ -1590,7 +1595,8 @@ function drawPreview(v: ContainerView, dtMs: number): boolean {
       if (rows) {
         rows.forEach((r, k) => {
           const hv = r.higuchi ?? 1;
-          pg.rect(x0 + k * 34, y0 + h - (hv - 1) * h, 26, (hv - 1) * h).fill({
+          const stride = w / rows.length;
+          pg.rect(x0 + k * stride, y0 + h - (hv - 1) * h, stride * 0.76, (hv - 1) * h).fill({
             color: COLORS.accent,
             alpha: 0.5,
           });
@@ -1767,6 +1773,7 @@ export function createPainters(): Painters {
     size(kind, _id, view, w, h) {
       if (kind === 'card') {
         view.state.w = w;
+        view.state.h = h;
         paintCardFrame(view);
         return;
       }

@@ -44,19 +44,21 @@ export interface P5Geo {
   gy0: number;
   gw: number;
   gh: number;
-  /** Uniform scale of the 200 x 170 card design. */
+  /** Uniform scale for card text and previews. */
   s: number;
+  baseWidth: number;
+  baseHeight: number;
   floatingPane: boolean;
   basket: { x: number; y: number; w: number; h: number };
   /** visible (matching, unselected) families in grid order */
   visible: FamilyId[];
   /** The hovered card that is expanded sideways (shows its settings), or null. */
   expanded: FamilyId | null;
-  /** Design-unit width of visible card k (200, or wider when expanded). */
+  /** Design-unit width of visible card k, including the settings pane when expanded. */
   widthOf: (k: number) => number;
   /** Uniform scale of visible card k (row-mates of an expanded card shrink). */
   scaleOf: (k: number) => number;
-  /** Centre of the 200 x 170 base area of visible card k (the expansion grows to the right). */
+  /** Centre of the base area of visible card k. */
   slotOf: (k: number) => { x: number; y: number };
   rows: number;
   /** The expanded card's settings pane opens to the left (the card is in the last column). */
@@ -105,24 +107,46 @@ export function p5Geo(c: LayoutCtx): P5Geo {
   const gy0 = TOP + 44;
   const gw = W(c) - 2 * PAD;
   const gh = H(c) - gy0 - 12;
-  const cols = Math.max(1, Math.min(6, Math.floor((gw + GAP) / (0.9 * CARD_W + GAP))));
-  const sc = Math.min(1.25, (gw - (cols - 1) * GAP) / (cols * CARD_W));
+  const total = FAMILY_IDS.length;
+  const minHeight = 150;
+  const maxCols = Math.max(1, Math.min(6, Math.floor((gw + GAP) / (0.9 * CARD_W + GAP))));
+  let cols = 1;
+  let best = Infinity;
+  for (let candidate = 1; candidate <= maxCols; candidate++) {
+    if (total % candidate !== 0) continue;
+    const rows = total / candidate;
+    const width = (gw - (candidate - 1) * GAP) / candidate;
+    const height = (gh - (rows - 1) * GAP) / rows;
+    const aspect = width / Math.max(minHeight, height);
+    const score = Math.abs(Math.log(aspect / 1.55)) + Math.max(0, minHeight - height) / 80;
+    if (score < best) {
+      cols = candidate;
+      best = score;
+    }
+  }
+  const gridRows = total / cols;
+  const cardWidth = (gw - (cols - 1) * GAP) / cols;
+  const cardHeight = Math.max(minHeight, (gh - (gridRows - 1) * GAP) / gridRows);
+  const sc = Math.min(1.35, cardHeight / CARD_H);
+  const baseWidth = cardWidth / sc;
+  const baseHeight = cardHeight / sc;
   const floatingPane = cols < 3;
   const visible = FAMILY_IDS.filter((f) => matches(c, f) && !c.settings.features.includes(f));
   const ex = c.ui.expandFamily as FamilyId | null;
   const expanded = ex && visible.includes(ex) ? ex : null;
   const ek = expanded ? visible.indexOf(expanded) : -1;
   const expRow = ek >= 0 && !floatingPane ? Math.floor(ek / cols) : -1;
-  const rowW = cols * CARD_W * sc + (cols - 1) * GAP;
-  const maxPaneWidth = Math.max(340, (cols - 1) * CARD_W * sc * (1 - SHRINK));
+  const rows = Math.max(1, Math.ceil(visible.length / cols));
+  const scroll = Math.min(c.ui.scrollY, Math.max(0, rows * (cardHeight + GAP) - GAP - gh));
+  const maxPaneWidth = Math.max(340, (cols - 1) * cardWidth * (1 - SHRINK));
   const nInRow = (r: number): number => Math.min(cols, visible.length - r * cols);
   // In the expanded card's row the other cards shrink (uniformly) and the expanded card takes the rest.
   const scaleOf = (k: number): number => (Math.floor(k / cols) === expRow && k !== ek ? sc * SHRINK : sc);
   const widthOf = (k: number): number => {
-    if (k !== ek || floatingPane) return CARD_W;
+    if (k !== ek || floatingPane) return baseWidth;
     const others = nInRow(expRow) - 1;
-    const px = rowW - others * (CARD_W * sc * SHRINK + GAP);
-    return Math.min(CARD_W + maxPaneWidth / sc, Math.max(CARD_W, px / sc));
+    const px = gw - others * (cardWidth * SHRINK + GAP);
+    return Math.min(baseWidth + maxPaneWidth / sc, Math.max(baseWidth, px / sc));
   };
   const pos: { x: number; y: number }[] = [];
   for (let k = 0; k < visible.length; k++) {
@@ -130,24 +154,25 @@ export function p5Geo(c: LayoutCtx): P5Geo {
     let x = gx0;
     for (let q = r * cols; q < k; q++) x += widthOf(q) * scaleOf(q) + GAP;
     pos.push({
-      x: x + (CARD_W * scaleOf(k)) / 2,
-      y: gy0 + r * (CARD_H * sc + GAP) + (CARD_H * sc) / 2 - c.ui.scrollY,
+      x: x + (baseWidth * scaleOf(k)) / 2,
+      y: gy0 + r * (cardHeight + GAP) + cardHeight / 2 - scroll,
     });
   }
   const slotOf = (k: number): { x: number; y: number } => {
     if (k < pos.length) return pos[k];
     return {
-      x: gx0 + (k % cols) * (CARD_W * sc + GAP) + (CARD_W * sc) / 2,
-      y: gy0 + Math.floor(k / cols) * (CARD_H * sc + GAP) + (CARD_H * sc) / 2 - c.ui.scrollY,
+      x: gx0 + (k % cols) * (cardWidth + GAP) + cardWidth / 2,
+      y: gy0 + Math.floor(k / cols) * (cardHeight + GAP) + cardHeight / 2 - scroll,
     };
   };
-  const rows = Math.max(1, Math.ceil(visible.length / cols));
   return {
     gx0,
     gy0,
     gw,
     gh,
     s: sc,
+    baseWidth,
+    baseHeight,
     floatingPane,
     // where the basket lands on the stage after floating out of the sidebar (5 -> 6 spill origin)
     basket: flipRect(c),
@@ -170,7 +195,7 @@ export function basketChipPos(g: P5Geo, k: number): { x: number; y: number } {
 
 export function maxScroll(c: LayoutCtx): number {
   const g = p5Geo(c);
-  return Math.max(0, g.rows * (CARD_H * g.s + GAP) - GAP - g.gh);
+  return Math.max(0, g.rows * (g.baseHeight * g.s + GAP) - GAP - g.gh);
 }
 
 function hash01(n: number): number {
@@ -192,13 +217,15 @@ export function layout(c: LayoutCtx): Layout {
     const inBasket = chosen.includes(f);
     const vis = g.visible.indexOf(f);
     const common = {
-      w: CARD_W,
-      h: CARD_H,
+      w: g.baseWidth,
+      h: g.baseHeight,
       rotation: 0,
       alpha: 1,
       color: COLORS.panel,
       extra: {
         family: f,
+        baseWidth: g.baseWidth,
+        baseHeight: g.baseHeight,
         title: TITLES[f],
         explanation: meta?.explanation ?? '',
         count: meta?.error ? null : (meta?.count ?? null),

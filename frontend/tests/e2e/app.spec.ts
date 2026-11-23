@@ -246,7 +246,7 @@ test('feature cards: scrolling, searching and filtering', async ({ page }) => {
   await page.getByTestId('card-search').fill('');
   await settle(page);
   const box = (await page.getByTestId('card-hjorth').boundingBox())!;
-  expect(box.width).toBeLessThanOrEqual(250);
+  expect(box.width).toBeLessThan(360);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.getByTestId('card-pane')).toBeVisible();
   await settle(page);
