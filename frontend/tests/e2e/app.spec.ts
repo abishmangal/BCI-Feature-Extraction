@@ -52,6 +52,17 @@ const go = async (page: Page, n: number): Promise<void> => {
   await page.getByTestId(`rail-${n}`).click();
 };
 
+test('redirects to Load data until a dataset is available', async ({ page }) => {
+  await page.goto('/#/7');
+  await expect(page).toHaveURL(/#\/1$/);
+  await expect(page.getByRole('heading', { name: 'Load data' })).toBeVisible();
+  await page.keyboard.press('5');
+  await expect(page).toHaveURL(/#\/1$/);
+  await pour(page);
+  await go(page, 2);
+  await expect(page).toHaveURL(/#\/2$/);
+});
+
 function makeCsv(channels: string[], trials = 8, samples = 40): Buffer {
   const rows = ['trial,label,channel,' + Array.from({ length: samples }, (_, i) => `s${i}`).join(',')];
   for (let t = 0; t < trials; t++)

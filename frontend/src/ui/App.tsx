@@ -11,7 +11,10 @@ function useRouting(): void {
   useEffect(() => {
     const fromHash = (): void => {
       const m = /^#\/(\d)$/.exec(location.hash);
-      if (m) navigate(+m[1]);
+      if (!m) return;
+      const requested = +m[1];
+      if (requested > 1 && !get().data) history.replaceState(history.state, '', '#/1');
+      navigate(requested);
     };
     fromHash();
     window.addEventListener('hashchange', fromHash);

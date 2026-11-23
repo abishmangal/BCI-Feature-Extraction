@@ -460,8 +460,8 @@ export function setResult<K extends keyof Results>(k: K, v: Results[K]): void {
 }
 
 export function navigate(page: number): void {
-  const p = Math.max(1, Math.min(8, page));
   const s = get();
+  const p = s.data ? Math.max(1, Math.min(8, page)) : 1;
   if (p === s.page) return;
   const visited = s.visited.includes(p) ? s.visited : [...s.visited, p];
   let ui = p === 8 || s.page === 8 ? { ...s.ui, exportPhase: 'chips-left' as const } : s.ui;

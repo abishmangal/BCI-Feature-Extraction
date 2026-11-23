@@ -7,7 +7,7 @@ import { p4Geo } from '../../src/layouts/page4';
 import { p5Geo } from '../../src/layouts/page5';
 import { p7Geo, raceBarHeight, RACE_HEADER_HEIGHT } from '../../src/layouts/page7';
 import { REG, ticks, tickStep, windowSnap, minWindow, type LayoutCtx } from '../../src/layouts/common';
-import { decodeDataset, defaultSettings, emptyPreset, selectChannelGroup, type Data, type Results } from '../../src/store/store';
+import { decodeDataset, defaultSettings, emptyPreset, get, navigate, selectChannelGroup, set, type Data, type Results } from '../../src/store/store';
 import { decodeF32, encodeF32 } from '../../src/api/f32';
 import { classOrderRank, stratifiedSubset } from '../../src/engine/slots';
 import type { DatasetResponse } from '../../src/api/types';
@@ -15,6 +15,22 @@ import { EngineCore } from '../../src/engine/core';
 import { P } from '../../src/engine/springs';
 
 const BUNDLES: Record<string, unknown> = { motor_imagery: mi, erp_p300: p3, ssvep: ss };
+
+it('keeps navigation on Load data until a dataset is loaded', () => {
+  const initial = get();
+  try {
+    set({ page: 1, data: null, visited: [1] });
+    for (let page = 2; page <= 8; page++) navigate(page);
+    expect(get().page).toBe(1);
+    expect(get().visited).toEqual([1]);
+    const data = decodeDataset(bundle('motor_imagery').dataset as DatasetResponse, 1);
+    set({ data });
+    navigate(2);
+    expect(get().page).toBe(2);
+  } finally {
+    set(initial);
+  }
+});
 
 it('adds electrode groups cumulatively and removes the group clicked again', () => {
   const order = ['C3', 'Cz', 'C4', 'P1', 'Pz', 'P2'];
